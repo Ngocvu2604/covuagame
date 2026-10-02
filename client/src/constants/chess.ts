@@ -3,11 +3,87 @@ import type { BoardThemeId, PieceType } from '../types/chess'
 /** Vị trí ban đầu chuẩn của ván cờ */
 export const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
-/** Các giao diện màu bàn cờ */
-export const BOARD_THEMES: Record<BoardThemeId, { id: BoardThemeId; label: string; light: string; dark: string }> = {
-  classic: { id: 'classic', label: 'Cổ điển', light: '#ebecd0', dark: '#779556' },
-  ocean: { id: 'ocean', label: 'Đại dương', light: '#dee3e6', dark: '#788a94' },
-  walnut: { id: 'walnut', label: 'Gỗ óc chó', light: '#e6c9a3', dark: '#8b5f3d' },
+/**
+ * Các giao diện màu bàn cờ. Thêm theme mới = thêm 1 phần tử vào đây
+ * (id, label, màu ô sáng/tối, màu glow viền bàn cờ).
+ */
+export interface BoardTheme {
+  id: BoardThemeId
+  label: string
+  light: string
+  dark: string
+  /** Màu glow nhẹ cho viền/shadow bàn cờ (rgba) */
+  glow: string
+}
+
+export const BOARD_THEMES: Record<BoardThemeId, BoardTheme> = {
+  classic: {
+    id: 'classic',
+    label: 'Classic',
+    light: '#f0d9b5',
+    dark: '#b58863',
+    glow: 'rgba(181, 136, 99, 0.35)',
+  },
+  wood: {
+    id: 'wood',
+    label: 'Wood',
+    light: '#e8cfa9',
+    dark: '#9c6b3f',
+    glow: 'rgba(156, 107, 63, 0.4)',
+  },
+  green: {
+    id: 'green',
+    label: 'Green',
+    light: '#eeeed2',
+    dark: '#769656',
+    glow: 'rgba(118, 150, 86, 0.4)',
+  },
+  blue: {
+    id: 'blue',
+    label: 'Blue',
+    light: '#e2eaf5',
+    dark: '#6d8fc4',
+    glow: 'rgba(109, 143, 196, 0.4)',
+  },
+  purple: {
+    id: 'purple',
+    label: 'Purple',
+    light: '#e5d9f2',
+    dark: '#7d5ba6',
+    glow: 'rgba(125, 91, 166, 0.45)',
+  },
+  dark: {
+    id: 'dark',
+    label: 'Dark',
+    light: '#566175',
+    dark: '#232c3b',
+    glow: 'rgba(86, 97, 117, 0.35)',
+  },
+  neon: {
+    id: 'neon',
+    label: 'Neon',
+    light: '#26334d',
+    dark: '#161f33',
+    glow: 'rgba(34, 211, 238, 0.35)',
+  },
+  minimal: {
+    id: 'minimal',
+    label: 'Minimal',
+    light: '#f4f4f5',
+    dark: '#d4d4d8',
+    glow: 'rgba(161, 161, 170, 0.35)',
+  },
+}
+
+/** Danh sách theme theo thứ tự hiển thị */
+export const BOARD_THEME_LIST = Object.values(BOARD_THEMES)
+
+/** Theme mặc định + fallback khi setting đã lưu không còn hợp lệ */
+export const DEFAULT_BOARD_THEME: BoardThemeId = 'classic'
+
+export function getBoardTheme(id: string | undefined): BoardTheme {
+  if (id && id in BOARD_THEMES) return BOARD_THEMES[id as BoardThemeId]
+  return BOARD_THEMES[DEFAULT_BOARD_THEME]
 }
 
 /** Các cột theo thứ tự trái → phải khi nhìn từ phía Trắng */

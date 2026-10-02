@@ -7,6 +7,7 @@ import { MoveHistory } from '../components/moves/MoveHistory'
 import { GameControls } from '../components/game/GameControls'
 import { GameHeader } from '../components/game/GameHeader'
 import { GameResult } from '../components/game/GameResult'
+import { SettingsDrawer } from '../components/settings/SettingsDrawer'
 import { Button } from '../components/common/Button'
 import { useChessGame } from '../hooks/useChessGame'
 import { useChessAI } from '../hooks/useChessAI'
@@ -16,7 +17,6 @@ import { useGameStore } from '../state/gameStore'
 import { useSettingsStore } from '../state/settingsStore'
 import { usePlayerStore } from '../state/playerStore'
 import { opposite } from '../chess/chessUtils'
-import { BOARD_THEMES } from '../constants/chess'
 import { TIME_CONTROL_OPTIONS } from '../constants/game'
 import { DIFFICULTY_OPTIONS } from '../constants/difficulty'
 import type { DifficultyId } from '../constants/difficulty'
@@ -34,11 +34,11 @@ interface OfflineSetup {
 export function OfflineGamePage() {
   const navigate = useNavigate()
   const defaultDifficulty = useSettingsStore((s) => s.defaultDifficulty)
-  const boardThemeId = useSettingsStore((s) => s.boardTheme)
   const playerName = usePlayerStore((s) => s.name)
   const endGame = useGameStore((s) => s.endGame)
 
   const [phase, setPhase] = useState<'setup' | 'playing'>('setup')
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [setup, setSetup] = useState<OfflineSetup>({
     difficulty: defaultDifficulty,
     colorChoice: 'white',
@@ -81,7 +81,6 @@ export function OfflineGamePage() {
   })
 
   const aiName = `Máy · ${DIFFICULTY_OPTIONS.find((o) => o.id === setup.difficulty)?.name ?? ''}`
-  const boardTheme = BOARD_THEMES[boardThemeId]
 
   const choiceButtonClass = (active: boolean) =>
     `rounded-xl border px-2 py-2 text-xs font-medium transition sm:px-3 sm:text-sm ${
@@ -118,8 +117,8 @@ export function OfflineGamePage() {
 
   if (phase === 'setup') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/70 p-6 shadow-xl">
+      <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
+        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
           <h2 className="text-center text-xl font-bold">Tạo trận đấu</h2>
           <p className="mt-1 text-center text-sm text-slate-400">
             Chơi với máy — hoạt động hoàn toàn offline
@@ -215,10 +214,12 @@ export function OfflineGamePage() {
         : aiName
       : null
 
+  const lastMoveRecord = state.moveHistory.at(-1) ?? null
+
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100">
+    <main className="min-h-screen px-4 py-6 text-slate-100">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <GameHeader title="Chơi với máy" />
+        <GameHeader title="Chơi với máy" onOpenSettings={() => setSettingsOpen(true)} />
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,560px)_20rem] lg:justify-center">
           <div className="mx-auto flex w-full max-w-[560px] flex-col gap-2">
@@ -235,10 +236,10 @@ export function OfflineGamePage() {
             <ChessBoard
               pieces={state.pieces}
               orientation={playerColor}
-              squareColors={{ light: boardTheme.light, dark: boardTheme.dark }}
               selectedSquare={selectedSquare}
               legalTargets={legalTargets}
               lastMove={state.lastMove}
+              lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={state.checkSquare}
               disabled={state.result !== null || state.turn === aiColor}
               onSquareClick={handleSquareClick}
@@ -275,6 +276,7 @@ export function OfflineGamePage() {
           onHome={() => navigate('/')}
         />
       )}
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   )
 }

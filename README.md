@@ -8,13 +8,19 @@ Website chơi cờ vua trên nền tảng Web với 2 chế độ: **chơi với
 - **3 mức độ AI**: 🟢 Tân Binh (dễ, có sai lầm chủ ý) · 🟡 Kỳ Thủ (trung bình) · 🔴 Đại Kiện Tướng (Minimax + Alpha-Beta + Quiescence, chạy trong Web Worker)
 - **Chơi Online** — tạo phòng / tham gia bằng mã phòng 6 ký tự, nước đi realtime, server xác thực mọi nước đi (anti-cheat)
 - **Đầy đủ luật cờ vua**: chiếu, chiếu hết, hòa (stalemate, lặp 3 lần, luật 50 nước, thiếu lực lượng), nhập thành 2 cánh, bắt tốt qua đường, phong cấp
+- **8 Board Theme**: Classic / Wood / Green / Blue / Purple / Dark / Neon / Minimal — đổi ngay lập tức, lưu localStorage
+- **8 Piece Set**: Classic / Modern / Minimal / Glass / 3D / Fantasy / Neon / Wooden — quân Trắng luôn sáng, quân Đen luôn tối
+- **Tọa độ A–H / 1–8** trên bàn cờ (bật/tắt được, tự đảo theo góc nhìn)
+- **Dark / Dim / Light** display mode
+- **Nhạc nền ambient** tổng hợp bằng Web Audio (không cần file) — bật/tắt + volume; hoặc thay bằng file `client/public/audio/background.mp3` của bạn
+- **Settings Drawer** trong game (slide-over desktop / bottom-sheet mobile) + trang Cài đặt đầy đủ
 - **Đồng hồ cờ** cho cả offline và online (3/5/10/15 phút hoặc ∞), hết giờ xử thua
 - **Lịch sử nước đi** đánh số, highlight nước cuối
 - **Chat** giữa 2 người chơi trong phòng online
 - **Xin hòa / Đầu hàng / Chơi lại (đổi màu)** trong phòng online
 - **Xử lý mất kết nối**: banner đếm ngược 30s, tự động lấy lại chỗ, khôi phục state + lịch sử chat
 - **Âm thanh** tổng hợp bằng Web Audio (đi/ăn/chiếu/hết cờ/nhập thành/phong cấp/thắng/thua) — không cần file âm thanh, bật/tắt trong Cài đặt
-- **Animation** nhẹ (quân trượt, modal, highlight), tôn trọng `prefers-reduced-motion`
+- **Animation** nhẹ (quân trượt, capture ring, king shake, modal), tôn trọng `prefers-reduced-motion`, tắt/bật được trong Settings
 - **Responsive** từ mobile (375px) đến desktop
 - **Lưu cài đặt** (tên, âm thanh, màu bàn cờ, độ khó mặc định) vào localStorage
 
@@ -59,16 +65,17 @@ chess-arena/
 │       │   │                    #   DrawButton, RematchButton
 │       │   ├── chat/            # ChatBox, ChatMessage, ChatInput
 │       │   ├── room/            # RoomCode, CopyRoomCodeButton, RoomStatus
-│       │   └── common/          # Button, Modal, ErrorMessage
+│       │   └── common/          # Button, Modal, ErrorMessage, Toast
+│       │   └── settings/        # SettingsContent (dùng chung), SettingsDrawer
 │       ├── pages/               # HomePage, OfflineGamePage, OnlineLobbyPage,
 │       │                        #   OnlineGamePage, SettingsPage
 │       ├── online/              # socketClient, roomService, gameSync, reconnect
-│       ├── state/               # gameStore, roomStore, settingsStore, playerStore (zustand)
-│       ├── services/            # soundService (Web Audio), storageService (localStorage)
+│       ├── state/               # gameStore, roomStore, settingsStore, playerStore, uiStore (zustand)
+│       ├── services/            # soundService (SFX), musicService (nhạc nền), storageService
 │       ├── hooks/               # useChessGame, useChessAI, useChessClock,
 │       │                        #   useOnlineGame, useSound
 │       ├── types/               # chess, room, socket (domain types)
-│       ├── constants/           # chess, game, difficulty, socketEvents
+│       ├── constants/           # chess (board themes), pieceSets, game, difficulty, socketEvents
 │       └── utils/               # formatTime, localStorage, validation
 │
 ├── server/                      # Backend Socket.IO

@@ -19,11 +19,10 @@ import { RoomStatus } from '../components/room/RoomStatus'
 import { useOnlineGame } from '../hooks/useOnlineGame'
 import { useGameSoundEvents } from '../hooks/useSound'
 import { useRoomStore } from '../state/roomStore'
-import { useSettingsStore } from '../state/settingsStore'
 import { leaveRoom } from '../online/roomService'
 import { opposite } from '../chess/chessUtils'
-import { BOARD_THEMES } from '../constants/chess'
 import { RECONNECT_GRACE_SECONDS } from '../constants/game'
+import { SettingsDrawer } from '../components/settings/SettingsDrawer'
 
 /** Trang chơi Online: chờ đối thủ (hiện mã phòng) → ván đấu realtime */
 export function OnlineGamePage() {
@@ -49,11 +48,11 @@ export function OnlineGamePage() {
     actions,
     getClockMs,
   } = useOnlineGame()
-  const boardThemeId = useSettingsStore((s) => s.boardTheme)
-  const boardTheme = BOARD_THEMES[boardThemeId]
 
   // Âm thanh theo diễn biến ván cờ (mục 15)
   useGameSoundEvents({ state: gameState, myColor: yourColor })
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Đếm ngượcGrace time khi đối thủ mất kết nối (khớp grace time của server)
   const [reconnectSeconds, setReconnectSeconds] = useState(RECONNECT_GRACE_SECONDS)
@@ -90,8 +89,8 @@ export function OnlineGamePage() {
   // ---- Màn hình chờ đối thủ ----
   if (room.status === 'waiting') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8 text-slate-100">
-        <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-xl">
+      <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
+        <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
           <h2 className="text-xl font-bold">Phòng đã được tạo!</h2>
           <p className="text-sm text-slate-400">Chia sẻ mã này cho đối thủ của bạn:</p>
           <RoomCode code={room.code} />
@@ -101,6 +100,7 @@ export function OnlineGamePage() {
             ← Rời phòng
           </Button>
         </div>
+        <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </main>
     )
   }
@@ -112,6 +112,7 @@ export function OnlineGamePage() {
       ? 'Đến lượt'
       : 'Đang chờ'
   const myStatus = isMyTurn ? 'Đến lượt' : 'Đang chờ'
+  const lastMoveRecord = gameState?.moveHistory.at(-1) ?? null
 
   const winnerLabel =
     gameState?.result && gameState.result.winner !== null
@@ -121,9 +122,9 @@ export function OnlineGamePage() {
       : null
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100">
+    <main className="min-h-screen px-4 py-6 text-slate-100">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <GameHeader title={`Chơi Online · ${room.code}`} />
+        <GameHeader title={`Chơi Online · ${room.code}`} onOpenSettings={() => setSettingsOpen(true)} />
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,560px)_20rem] lg:justify-center">
           <div className="mx-auto flex w-full max-w-[560px] flex-col gap-2">
@@ -147,10 +148,10 @@ export function OnlineGamePage() {
             <ChessBoard
               pieces={gameState?.pieces ?? []}
               orientation={yourColor}
-              squareColors={{ light: boardTheme.light, dark: boardTheme.dark }}
               selectedSquare={selectedSquare}
               legalTargets={legalTargets}
               lastMove={gameState?.lastMove ?? null}
+              lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={gameState?.checkSquare ?? null}
               disabled={!isMyTurn}
               onSquareClick={handleSquareClick}
@@ -254,6 +255,8 @@ export function OnlineGamePage() {
           onHome={handleLeave}
         />
       )}
+
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </main>
   )
 }

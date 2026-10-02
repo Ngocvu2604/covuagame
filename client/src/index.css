@@ -10,6 +10,64 @@
   --color-gold: #f59e0b;
 }
 
+/* ===== Background của app (mục 7) ===== */
+body {
+  min-height: 100vh;
+  color: #e2e8f0;
+  background:
+    radial-gradient(1100px 700px at 85% -10%, rgba(16, 185, 129, 0.08), transparent 60%),
+    radial-gradient(900px 650px at -5% 110%, rgba(59, 130, 246, 0.07), transparent 55%),
+    #020617;
+}
+
+/* Họa tiết bàn cờ rất nhẹ phủ lên nền */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: conic-gradient(
+    rgba(148, 163, 184, 0.05) 90deg,
+    transparent 90deg 180deg,
+    rgba(148, 163, 184, 0.05) 180deg 270deg,
+    transparent 270deg
+  );
+  background-size: 96px 96px;
+}
+
+/* Chế độ hiển thị: Dịu nhẹ (dim) — nền phẳng, tương phản thấp hơn */
+html.display-dim body {
+  background:
+    radial-gradient(1000px 700px at 85% -10%, rgba(16, 185, 129, 0.05), transparent 60%),
+    #0c1220;
+}
+
+/* Chế độ hiển thị: Sáng (light) — nền chrome sáng, panel game giữ tối */
+html.display-light body {
+  color: #0f172a;
+  background:
+    radial-gradient(1100px 700px at 85% -10%, rgba(16, 185, 129, 0.1), transparent 60%),
+    radial-gradient(900px 650px at -5% 110%, rgba(59, 130, 246, 0.08), transparent 55%),
+    #e9edf3;
+}
+html.display-light body::before {
+  opacity: 0.5;
+  background-image: conic-gradient(
+    rgba(15, 23, 42, 0.04) 90deg,
+    transparent 90deg 180deg,
+    rgba(15, 23, 42, 0.04) 180deg 270deg,
+    transparent 270deg
+  );
+}
+html.display-light .app-chrome-title {
+  color: #0f172a;
+}
+html.display-light .app-chrome-muted {
+  color: #475569;
+}
+
 /* ===== Animations (mục 15 — chỉ dùng transform/opacity cho mượt) ===== */
 
 /* Quân cờ trượt từ ô xuất phát tới ô đích (delta đặt qua CSS variables) */
@@ -24,6 +82,47 @@
 
 .piece-slide {
   animation: piece-slide 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* Hover quân cờ: nâng nhẹ + shadow (đã có transition trên phần tử) */
+.square-interactive .piece-hover-lift {
+  will-change: transform;
+}
+
+/* Ring hiệu ứng ăn quân */
+@keyframes capture-ring {
+  from {
+    transform: scale(0.7);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+
+.capture-ring {
+  border: 3px solid rgba(239, 68, 68, 0.75);
+  border-radius: 6px;
+  animation: capture-ring 340ms ease-out forwards;
+}
+
+/* Vua rung nhẹ khi bị chiếu */
+@keyframes piece-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.piece-shake {
+  animation: piece-shake 240ms ease-in-out 2;
 }
 
 @keyframes fade-in {
@@ -46,9 +145,19 @@
   }
 }
 
-/* Tôn trọng cài đặt giảm chuyển động của hệ điều hành */
+/* Tắt toàn bộ animation khi người dùng tắt trong Settings
+   hoặc hệ điều hành bật giảm chuyển động */
+.animations-off .piece-slide,
+.animations-off .capture-ring,
+.animations-off .piece-shake,
+.animations-off [class*="animate-"] {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .piece-slide {
-    animation: none;
+  .piece-slide,
+  .capture-ring,
+  .piece-shake {
+    animation: none !important;
   }
 }

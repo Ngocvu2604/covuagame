@@ -2,14 +2,42 @@ import { useEffect, useRef } from 'react'
 import type { GameState, PlayerColor } from '../types/chess'
 import { pickMoveSound, soundService } from '../services/soundService'
 import type { SoundName } from '../services/soundService'
+import { musicService } from '../services/musicService'
 import { useSettingsStore } from '../state/settingsStore'
 
-/** Đồng bộ bật/tắt âm thanh từ Settings vào soundService */
+/**
+ * Đồng bộ toàn bộ cài đặt âm thanh (SFX + nhạc nền) từ Settings
+ * vào các audio service, và mở khoá AudioContext sau tương tác
+ * đầu tiên của người dùng (chính sách autoplay của trình duyệt).
+ */
 export function useSound(): void {
   const soundEnabled = useSettingsStore((s) => s.soundEnabled)
+  const musicEnabled = useSettingsStore((s) => s.musicEnabled)
+  const musicVolume = useSettingsStore((s) => s.musicVolume)
+
   useEffect(() => {
     soundService.setEnabled(soundEnabled)
   }, [soundEnabled])
+
+  useEffect(() => {
+    musicService.setEnabled(musicEnabled)
+  }, [musicEnabled])
+
+  useEffect(() => {
+    musicService.setVolume(musicVolume)
+  }, [musicVolume])
+
+  useEffect(() => {
+    const unlock = () => musicService.unlock()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener('click', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+      window.removeEventListener('click', unlock)
+    }
+  }, [])
 }
 
 interface GameSoundEventsOptions {

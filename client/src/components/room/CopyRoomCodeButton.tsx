@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Button } from '../common/Button'
+import { pushToast } from '../../state/uiStore'
 
 interface CopyRoomCodeButtonProps {
   code: string
 }
 
-/** Copy mã phòng vào clipboard với phản hồi "Đã copy" */
+/** Copy mã phòng vào clipboard với phản hồi "Đã copy" + toast */
 export function CopyRoomCodeButton({ code }: CopyRoomCodeButtonProps) {
   const [copied, setCopied] = useState(false)
 
@@ -22,6 +23,7 @@ export function CopyRoomCodeButton({ code }: CopyRoomCodeButtonProps) {
       textarea.remove()
     }
     setCopied(true)
+    pushToast(`Đã copy mã phòng: ${code}`, 'success')
     setTimeout(() => setCopied(false), 2000)
   }
 

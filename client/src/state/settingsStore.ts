@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { BoardThemeId } from '../types/chess'
+import type { BoardThemeId, DisplayMode } from '../types/chess'
 import type { DifficultyId } from '../constants/difficulty'
+import type { PieceSetId } from '../constants/pieceSets'
+import { DEFAULT_BOARD_THEME, BOARD_THEMES } from '../constants/chess'
+import { DEFAULT_PIECE_SET, PIECE_SETS } from '../constants/pieceSets'
 import { createPersistentStorage, storageKeys } from '../services/storageService'
 
 /**
@@ -9,33 +12,89 @@ import { createPersistentStorage, storageKeys } from '../services/storageService
  * để giữ nguyên sau khi reload trang (yêu cầu mục 20).
  */
 
-interface SettingsState {
-  /** Bật/tắt hiệu ứng âm thanh (soundService sẽ dùng ở Phase 8) */
+export type SettingsState = {
+  /** Âm thanh hiệu ứng (SFX) */
   soundEnabled: boolean
+  /** Nhạc nền */
+  musicEnabled: boolean
+  /** Âm lượng nhạc nền 0..1 */
+  musicVolume: number
   /** Màu bàn cờ */
   boardTheme: BoardThemeId
+  /** Bộ quân cờ */
+  pieceSet: PieceSetId
+  /** Chế độ hiển thị trang */
+  displayMode: DisplayMode
+  /** Hiện tọa độ a-h / 1-8 trên bàn cờ */
+  showCoordinates: boolean
+  /** Bật/tắt animation */
+  animationsEnabled: boolean
+  /** Hiện gợi ý nước đi hợp lệ */
+  showLegalMoves: boolean
+  /** Hiện highlight nước đi cuối */
+  showLastMove: boolean
   /** Độ khó được chọn sẵn khi tạo trận với máy */
   defaultDifficulty: DifficultyId
+}
 
+export type SettingsActions = {
   setSoundEnabled: (enabled: boolean) => void
+  setMusicEnabled: (enabled: boolean) => void
+  setMusicVolume: (volume: number) => void
   setBoardTheme: (theme: BoardThemeId) => void
+  setPieceSet: (set: PieceSetId) => void
+  setDisplayMode: (mode: DisplayMode) => void
+  setShowCoordinates: (show: boolean) => void
+  setAnimationsEnabled: (enabled: boolean) => void
+  setShowLegalMoves: (show: boolean) => void
+  setShowLastMove: (show: boolean) => void
   setDefaultDifficulty: (difficulty: DifficultyId) => void
 }
 
-export const useSettingsStore = create<SettingsState>()(
+export type SettingsStore = SettingsState & SettingsActions
+
+const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
+
+export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
       soundEnabled: true,
-      boardTheme: 'classic',
+      musicEnabled: false,
+      musicVolume: 0.5,
+      boardTheme: DEFAULT_BOARD_THEME,
+      pieceSet: DEFAULT_PIECE_SET,
+      displayMode: 'dark',
+      showCoordinates: true,
+      animationsEnabled: true,
+      showLegalMoves: true,
+      showLastMove: true,
       defaultDifficulty: 'medium',
 
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
+      setMusicEnabled: (enabled) => set({ musicEnabled: enabled }),
+      setMusicVolume: (volume) => set({ musicVolume: clamp01(volume) }),
       setBoardTheme: (theme) => set({ boardTheme: theme }),
+      setPieceSet: (pieceSet) => set({ pieceSet }),
+      setDisplayMode: (displayMode) => set({ displayMode }),
+      setShowCoordinates: (showCoordinates) => set({ showCoordinates }),
+      setAnimationsEnabled: (animationsEnabled) => set({ animationsEnabled }),
+      setShowLegalMoves: (showLegalMoves) => set({ showLegalMoves }),
+      setShowLastMove: (showLastMove) => set({ showLastMove }),
       setDefaultDifficulty: (difficulty) => set({ defaultDifficulty: difficulty }),
     }),
     {
       name: storageKeys.settings,
       storage: createJSONStorage(() => createPersistentStorage()),
+      // Val hoá dữ liệu đã lưu: theme/set bị bỏ tên hoặc giá trị sai → dùng mặc định
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        if (!(state.boardTheme in BOARD_THEMES)) useSettingsStore.setState({ boardTheme: DEFAULT_BOARD_THEME })
+        if (!(state.pieceSet in PIECE_SETS)) useSettingsStore.setState({ pieceSet: DEFAULT_PIECE_SET })
+        if (!['dark', 'dim', 'light'].includes(state.displayMode)) {
+          useSettingsStore.setState({ displayMode: 'dark' })
+        }
+        useSettingsStore.setState({ musicVolume: clamp01(state.musicVolume) })
+      },
     },
   ),
 )

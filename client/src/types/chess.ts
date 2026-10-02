@@ -11,7 +11,18 @@ export type PlayerColor = 'white' | 'black'
 export type GameMode = 'offline' | 'online'
 
 /** Giao diện màu bàn cờ */
-export type BoardThemeId = 'classic' | 'ocean' | 'walnut'
+export type BoardThemeId =
+  | 'classic'
+  | 'wood'
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'dark'
+  | 'neon'
+  | 'minimal'
+
+/** Chế độ hiển thị tổng thể của trang */
+export type DisplayMode = 'dark' | 'dim' | 'light'
 
 /** Loại quân cờ */
 export type PieceType = 'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn'

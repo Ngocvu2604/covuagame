@@ -3,6 +3,7 @@ import type { PieceOnSquare, PieceType, PlayerColor, SquareName } from '../types
 import { getLegalTargetsFromFen, isPromotionNeededFromFen } from '../chess/chessEngine'
 import { toPieceSymbol } from '../chess/chessUtils'
 import { useRoomStore } from '../state/roomStore'
+import { pushToast } from '../state/uiStore'
 import {
   sendChat,
   sendDrawAccept,
@@ -58,7 +59,7 @@ export function useOnlineGame() {
       },
       // Trạng thái kết nối đã nằm trong room:updated (cập nhật player.connected)
       onPlayerDisconnected: () => undefined,
-      onPlayerReconnected: () => undefined,
+      onPlayerReconnected: (payload) => pushToast(`${payload.name} đã kết nối lại`, 'success'),
       onDrawOffered: (payload) => useRoomStore.getState().setDrawOffer(payload.from),
       onDrawDeclined: () => useRoomStore.getState().setDrawOffer(null),
       onRematchOffered: (payload) => useRoomStore.getState().setRematchOffer(payload.from),
