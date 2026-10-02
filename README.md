@@ -123,7 +123,11 @@ npm run server
 npm run build
 # → client/dist — mở trực tiếp dist/index.html để chơi offline (AI vẫn chạy)
 ```
+## web
 
+```bash
+http://vuacovua.id.vn
+```
 ## Test tự động
 
 ```bash
