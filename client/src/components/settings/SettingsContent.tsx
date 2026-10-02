@@ -49,7 +49,7 @@ function Toggle({
         } focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
             checked ? 'translate-x-[22px]' : 'translate-x-0.5'
           }`}
         />
@@ -163,13 +163,11 @@ export function SettingsContent() {
         <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
           <Toggle
             label="Coordinates"
-            description="Tọa độ A–H / 1–8 trên bàn cờ"
             checked={settings.showCoordinates}
             onChange={settings.setShowCoordinates}
           />
           <Toggle
             label="Animation"
-            description="Hiệu ứng di chuyển và highlight"
             checked={settings.animationsEnabled}
             onChange={settings.setAnimationsEnabled}
           />
@@ -180,7 +178,6 @@ export function SettingsContent() {
         <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
           <Toggle
             label="Background Music"
-            description="Nhạc nền nhẹ (thay bằng file của bạn tại public/audio/background.mp3)"
             checked={settings.musicEnabled}
             onChange={settings.setMusicEnabled}
           />
@@ -201,7 +198,6 @@ export function SettingsContent() {
           </div>
           <Toggle
             label="Sound Effects"
-            description="Âm đi quân, ăn quân, chiếu..."
             checked={settings.soundEnabled}
             onChange={settings.setSoundEnabled}
           />
@@ -212,13 +208,11 @@ export function SettingsContent() {
         <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
           <Toggle
             label="Show Legal Moves"
-            description="Gợi ý các nước đi hợp lệ"
             checked={settings.showLegalMoves}
             onChange={settings.setShowLegalMoves}
           />
           <Toggle
             label="Show Last Move"
-            description="Highlight nước đi cuối cùng"
             checked={settings.showLastMove}
             onChange={settings.setShowLastMove}
           />

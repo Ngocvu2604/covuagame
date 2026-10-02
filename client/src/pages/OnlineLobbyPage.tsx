@@ -180,7 +180,6 @@ export function OnlineLobbyPage() {
             onKeyDown={(event) => {
               if (event.key === 'Enter') void handleJoin()
             }}
-            placeholder="X7K9P2"
             aria-label="Mã phòng"
             className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-3 text-center font-mono text-2xl tracking-[0.3em] uppercase outline-none transition focus:border-emerald-500"
           />

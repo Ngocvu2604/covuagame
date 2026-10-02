@@ -74,12 +74,21 @@ const RECIPES: Record<SoundName, ToneSpec[]> = {
 
 const MASTER_VOLUME = 0.5
 
+/** Khoảng nghỉ tối thiểu giữa 2 âm hover (chống ồn khi lướt nhanh qua nhiều quân) */
+const HOVER_THROTTLE_MS = 70
+
 class SoundService {
   private context: AudioContext | null = null
   private enabled = true
+  /** Oscillator của âm hover đang vang — dùng để CẤT âm cũ trước khi phát âm mới */
+  private hoverNodes: { oscillator: OscillatorNode; gain: GainNode } | null = null
+  private lastHoverPlayedAt = 0
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled
+    if (!enabled) {
+      this.stopHover()
+    }
   }
 
   play(name: SoundName): void {
@@ -107,6 +116,60 @@ class SoundService {
       oscillator.start(start)
       oscillator.stop(start + tone.duration + 0.02)
     }
+  }
+
+  /**
+   * Âm tick rất ngắn khi rê chuột qua quân cờ.
+   * Chống ồn 2 lớp (mục "tối ưu hóa chống ồn"):
+   * 1. Throttle — không phát lặp trong 70ms kể từ lần phát gần nhất.
+   * 2. Cut-old — nếu âm trước đó còn vang thì dừng nó ngay trước khi phát âm mới,
+   *    không bao giờ có 2 âm hover chồng lên nhau.
+   */
+  playHover(): void {
+    if (!this.enabled) return
+    const wallNow = performance.now()
+    if (wallNow - this.lastHoverPlayedAt < HOVER_THROTTLE_MS) return
+    this.lastHoverPlayedAt = wallNow
+
+    const context = this.ensureContext()
+    if (!context) return
+    if (context.state === 'suspended') {
+      void context.resume()
+    }
+
+    // Cắt âm hover cũ còn vang
+    this.stopHover()
+
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    oscillator.type = 'triangle'
+    oscillator.frequency.value = 1150
+    const start = context.currentTime
+    gain.gain.setValueAtTime(0.12 * MASTER_VOLUME, start)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.05)
+
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(start)
+    oscillator.stop(start + 0.06)
+    this.hoverNodes = { oscillator, gain }
+    oscillator.onended = () => {
+      this.hoverNodes = null
+    }
+  }
+
+  /** Dừng âm hover đang phát ngay lập tức */
+  private stopHover(): void {
+    if (!this.hoverNodes || !this.context) return
+    try {
+      const now = this.context.currentTime
+      this.hoverNodes.gain.gain.cancelScheduledValues(now)
+      this.hoverNodes.gain.gain.setValueAtTime(0, now)
+      this.hoverNodes.oscillator.stop(now)
+    } catch {
+      // oscillator đã tự kết thúc
+    }
+    this.hoverNodes = null
   }
 
   /** Tạo AudioContext lazily (trình duyệt yêu cầu user gesture trước) */
