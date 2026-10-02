@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Dark mode theo class trên <html> — app mặc định chạy dark */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Bảng màu chủ đạo của Chess Arena */
+  --color-accent: #10b981;
+  --color-danger: #ef4444;
+  --color-gold: #f59e0b;
+}

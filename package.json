@@ -1,0 +1,20 @@
+{
+  "name": "chess-arena",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Chess Arena — web chess game with offline AI and online multiplayer",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace client",
+    "server": "npm run dev --workspace server",
+    "build": "npm run build --workspace client",
+    "preview": "npm run preview --workspace client",
+    "typecheck": "npm run typecheck --workspace client && npm run typecheck --workspace server"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
