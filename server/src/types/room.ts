@@ -1,7 +1,17 @@
 import type { PlayerColor } from './game'
-import type { PlayerPublicInfo } from './player'
+import type { PlayerPublicInfo, ServerPlayer } from './player'
+
+export type { PlayerPublicInfo, ServerPlayer }
 
 export type RoomStatus = 'waiting' | 'playing' | 'finished'
+
+/** Tin nhắn chat trong phòng */
+export interface ChatMessage {
+  from: PlayerColor
+  fromName: string
+  text: string
+  sentAt: number
+}
 
 export interface Room {
   id: string
@@ -17,6 +27,8 @@ export interface Room {
   drawOfferedBy: PlayerColor | null
   /** Bên đang mời chơi lại (nếu có) */
   rematchOfferedBy: PlayerColor | null
+  /** Lịch sử chat của phòng (giữ tối đa 50 tin gần nhất) */
+  messages: ChatMessage[]
 }
 
 /** Dữ liệu phòng công khai phát cho client */

@@ -11,6 +11,7 @@ import { Button } from '../components/common/Button'
 import { useChessGame } from '../hooks/useChessGame'
 import { useChessAI } from '../hooks/useChessAI'
 import { useChessClock } from '../hooks/useChessClock'
+import { useGameSoundEvents } from '../hooks/useSound'
 import { useGameStore } from '../state/gameStore'
 import { useSettingsStore } from '../state/settingsStore'
 import { usePlayerStore } from '../state/playerStore'
@@ -62,6 +63,9 @@ export function OfflineGamePage() {
     difficulty: setup.difficulty,
   })
 
+  // Âm thanh theo diễn biến ván cờ (mục 15)
+  useGameSoundEvents({ state: state, myColor: phase === 'playing' ? playerColor : null })
+
   const timeControlMs = setup.timeMinutes === null ? null : setup.timeMinutes * 60_000
   const handleFlag = useCallback(
     (side: PlayerColor) => {
@@ -80,7 +84,7 @@ export function OfflineGamePage() {
   const boardTheme = BOARD_THEMES[boardThemeId]
 
   const choiceButtonClass = (active: boolean) =>
-    `rounded-xl border px-3 py-2 text-sm font-medium transition ${
+    `rounded-xl border px-2 py-2 text-xs font-medium transition sm:px-3 sm:text-sm ${
       active
         ? 'border-emerald-500 bg-emerald-600/15 text-emerald-200'
         : 'border-white/10 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
@@ -152,25 +156,26 @@ export function OfflineGamePage() {
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ['white', '⚪ Trắng'],
-                  ['black', '⚫ Đen'],
-                  ['random', '🎲 Ngẫu nhiên'],
+                  ['white', '⚪', 'Trắng'],
+                  ['black', '⚫', 'Đen'],
+                  ['random', '🎲', 'Ngẫu nhiên'],
                 ] as const
-              ).map(([value, label]) => (
+              ).map(([value, emoji, label]) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setSetup((s) => ({ ...s, colorChoice: value }))}
-                  className={choiceButtonClass(setup.colorChoice === value)}
+                  className={`flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 ${choiceButtonClass(setup.colorChoice === value)}`}
                 >
-                  {label}
+                  <span aria-hidden>{emoji}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
           </section>
 
           <section aria-label="Thời gian" className="mt-5">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Thời gian</p>
+            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Thời gian (phút)</p>
             <div className="grid grid-cols-5 gap-2">
               {TIME_CONTROL_OPTIONS.map((option) => (
                 <button

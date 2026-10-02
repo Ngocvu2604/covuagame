@@ -19,12 +19,15 @@ interface GameResultProps {
   result: GameResultType
   /** Tên hiển thị của bên thắng; null = hòa */
   winnerLabel: string | null
+  /** Nhãn nút chơi lại (online: "Mời chơi lại" với luồng đề nghị) */
+  rematchLabel?: string
+  rematchDisabled?: boolean
   onRematch: () => void
   onHome: () => void
 }
 
 /** Overlay kết thúc ván: kết quả, tỷ số và các hành động */
-export function GameResult({ result, winnerLabel, onRematch, onHome }: GameResultProps) {
+export function GameResult({ result, winnerLabel, rematchLabel, rematchDisabled = false, onRematch, onHome }: GameResultProps) {
   const score =
     result.winner === 'white' ? '1 – 0' : result.winner === 'black' ? '0 – 1' : '½ – ½'
 
@@ -45,8 +48,8 @@ export function GameResult({ result, winnerLabel, onRematch, onHome }: GameResul
           {result.winner ? `${COLOR_LABELS[result.winner]} thắng` : 'hai bên bất phân thắng bại'}
         </p>
         <div className="mt-6 flex w-full flex-col gap-2">
-          <Button variant="primary" fullWidth onClick={onRematch}>
-            Chơi lại
+          <Button variant="primary" fullWidth onClick={onRematch} disabled={rematchDisabled}>
+            {rematchLabel ?? 'Chơi lại'}
           </Button>
           <Button variant="secondary" fullWidth onClick={onHome}>
             Về trang chủ

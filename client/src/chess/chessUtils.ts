@@ -1,10 +1,23 @@
-import type { PieceType, PlayerColor } from '../types/chess'
+import type { PieceType, PlayerColor, SquareName } from '../types/chess'
 
 /** Ô cờ là ô sáng hay tối (ô a1 là ô tối) */
 export function isLightSquare(square: string): boolean {
   const fileIndex = square.charCodeAt(0) - 97 // 'a' === 97
   const rankIndex = Number(square[1]) - 1
   return (fileIndex + rankIndex) % 2 === 1
+}
+
+/** Vị trí ô nhìn thấy trên màn hình (row/col đếm từ 0, tính theo góc nhìn) */
+export function getViewPosition(
+  square: SquareName,
+  orientation: PlayerColor,
+): { row: number; col: number } {
+  const fileIndex = square.charCodeAt(0) - 97
+  const rank = Number(square[1])
+  return {
+    row: orientation === 'white' ? 8 - rank : rank - 1,
+    col: orientation === 'white' ? fileIndex : 7 - fileIndex,
+  }
 }
 
 /** Màu đối phương */

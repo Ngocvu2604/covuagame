@@ -20,7 +20,7 @@ export function HomePage() {
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/offline')}>
             🤖 Chơi với máy
           </Button>
-          <Button variant="secondary" size="lg" fullWidth disabled title="Sắp ra mắt">
+          <Button variant="secondary" size="lg" fullWidth onClick={() => navigate('/online')}>
             🌐 Chơi Online
           </Button>
           <Button variant="ghost" size="lg" fullWidth onClick={() => navigate('/settings')}>
@@ -28,8 +28,7 @@ export function HomePage() {
           </Button>
         </nav>
 
-        <p className="text-xs text-slate-600">Chơi với máy hoạt động hoàn toàn offline</p>
-      </div>
+        <p className="text-xs text-slate-600">Chơi với máy hoạt động hoàn toàn offline</p>      </div>
     </main>
   )
 }

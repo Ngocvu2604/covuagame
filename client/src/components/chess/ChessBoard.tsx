@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { CSSProperties } from 'react'
 import type { LastMove, PieceOnSquare, PlayerColor, SquareName } from '../../types/chess'
 import { FILES, RANKS } from '../../constants/chess'
+import { getViewPosition } from '../../chess/chessUtils'
 import { CheckIndicator } from './CheckIndicator'
 import { ChessSquare } from './ChessSquare'
 
@@ -55,6 +56,18 @@ export function ChessBoard({
     '--sq-dark': squareColors.dark,
   } as CSSProperties
 
+  // Hướng trượt của quân ở ô đích nước cuối (đúng theo góc nhìn hiện tại)
+  const slideFrom = useMemo(() => {
+    if (!lastMove) return null
+    const from = getViewPosition(lastMove.from, orientation)
+    const to = getViewPosition(lastMove.to, orientation)
+    return {
+      square: lastMove.to,
+      x: (from.col - to.col) * 100,
+      y: (from.row - to.row) * 100,
+    }
+  }, [lastMove, orientation])
+
   return (
     <div
       style={squareColorVars}
@@ -75,6 +88,7 @@ export function ChessBoard({
                 isLegalTarget={!disabled && legalTargets.includes(square)}
                 isLastMove={lastMove !== null && (square === lastMove.from || square === lastMove.to)}
                 isCheck={square === checkSquare}
+                slideFrom={slideFrom?.square === square ? slideFrom : undefined}
                 onSquareClick={disabled ? () => undefined : onSquareClick}
               />
             )

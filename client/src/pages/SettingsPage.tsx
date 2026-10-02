@@ -67,8 +67,9 @@ export function SettingsPage() {
           <Button
             variant={soundEnabled ? 'primary' : 'secondary'}
             onClick={() => setSoundEnabled(!soundEnabled)}
+            aria-pressed={soundEnabled}
           >
-            {soundEnabled ? '🔊 Bật' : '🔇 Tắt'}
+            {soundEnabled ? '🔊 Đang bật' : '🔇 Đang tắt'}
           </Button>
         </section>
 

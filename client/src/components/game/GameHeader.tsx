@@ -18,7 +18,9 @@ export function GameHeader({ title }: GameHeaderProps) {
         ←
       </button>
       <h1 className="truncate text-sm font-bold tracking-[0.18em] text-slate-200 sm:text-base">
-        ♟ CHESS ARENA <span className="font-medium text-slate-500">· {title}</span>
+        <span className="hidden sm:inline">♟ CHESS ARENA · </span>
+        <span className="sm:hidden">♟ · </span>
+        {title}
       </h1>
     </header>
   )

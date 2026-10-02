@@ -42,3 +42,13 @@ const PROMOTION_SYMBOLS = ['q', 'r', 'b', 'n']
 export function isValidPromotion(value: unknown): value is 'q' | 'r' | 'b' | 'n' {
   return typeof value === 'string' && PROMOTION_SYMBOLS.includes(value)
 }
+
+export const CHAT_MESSAGE_MAX_LENGTH = 200
+
+export function isValidChatText(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.trim().length > 0 &&
+    value.trim().length <= CHAT_MESSAGE_MAX_LENGTH
+  )
+}

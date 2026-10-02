@@ -1,5 +1,5 @@
 import { Chess } from 'chess.js'
-import type { GameResult, GameState, MoveRecord, PlayerColor } from '../types/game'
+import type { GameResult, GameState, MoveRecord, PlayerColor, SquareName } from '../types/game'
 import { buildGameState, opposite, toPieceType, toPlayerColor } from './GameState'
 import { findLegalMove } from './MoveValidator'
 import { ChessClock } from './ChessClock'
@@ -54,6 +54,16 @@ export class GameManager {
     return managed ? buildGameState(managed.game) : null
   }
 
+  /** Thời gian còn lại của 2 bên (null nếu ván không dùng đồng hồ) */
+  getClock(roomCode: string): { whiteMs: number; blackMs: number } | null {
+    const managed = this.games.get(roomCode)
+    if (!managed || !managed.clock.enabled) return null
+    return {
+      whiteMs: managed.clock.getRemaining('white'),
+      blackMs: managed.clock.getRemaining('black'),
+    }
+  }
+
   /**
    * Xác thực và thực hiện nước đi. Trả về lỗi cụ thể nếu:
    * ván đã kết thúc, không phải lượt của màu này, hoặc nước đi không hợp lệ.
@@ -77,8 +87,8 @@ export class GameManager {
       return { ok: false, error: 'NOT_YOUR_TURN' }
     }
 
-    const from = payload.from
-    const to = payload.to
+    const from = payload.from as SquareName
+    const to = payload.to as SquareName
     const legal = findLegalMove(game, from, to, payload.promotion)
     if (!legal) return { ok: false, error: 'INVALID_MOVE' }
 
@@ -91,7 +101,9 @@ export class GameManager {
       to,
       promotion: payload.promotion,
     })
-    clock.start(toPlayerColor(game.turn()))
+    const gameOver = game.isGameOver()
+    // Ván kết thúc thì không khởi động đồng hồ cho bên "tới lượt" tiếp theo
+    if (!gameOver) clock.start(toPlayerColor(game.turn()))
 
     const record: MoveRecord = {
       san: move.san,
@@ -103,7 +115,7 @@ export class GameManager {
       promotion: move.promotion ? toPieceType(move.promotion) : null,
     }
 
-    if (game.isGameOver()) {
+    if (gameOver) {
       managed.finished = true
     }
 

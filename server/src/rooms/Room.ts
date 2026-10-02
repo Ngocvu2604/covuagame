@@ -1,7 +1,9 @@
 import type { PlayerColor } from '../types/game'
-import type { PlayerPublicInfo, Room, RoomPublicData, ServerPlayer } from '../types/room'
+import type { ChatMessage, PlayerPublicInfo, Room, RoomPublicData, ServerPlayer } from '../types/room'
 
 /** Entity phòng + các hàm thuần thao tác trên phòng */
+
+const MAX_CHAT_HISTORY = 50
 
 export function createRoom(params: {
   id: string
@@ -19,7 +21,17 @@ export function createRoom(params: {
     lastActivity: Date.now(),
     drawOfferedBy: null,
     rematchOfferedBy: null,
+    messages: [],
   }
+}
+
+/** Lưu tin nhắn vào lịch sử phòng (giữ tối đa MAX_CHAT_HISTORY tin) */
+export function addChatMessage(room: Room, message: ChatMessage): void {
+  room.messages.push(message)
+  if (room.messages.length > MAX_CHAT_HISTORY) {
+    room.messages.shift()
+  }
+  touch(room)
 }
 
 export function toPublicData(room: Room): RoomPublicData {

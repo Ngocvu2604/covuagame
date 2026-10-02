@@ -9,3 +9,46 @@
   --color-danger: #ef4444;
   --color-gold: #f59e0b;
 }
+
+/* ===== Animations (mục 15 — chỉ dùng transform/opacity cho mượt) ===== */
+
+/* Quân cờ trượt từ ô xuất phát tới ô đích (delta đặt qua CSS variables) */
+@keyframes piece-slide {
+  from {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+
+.piece-slide {
+  animation: piece-slide 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Tôn trọng cài đặt giảm chuyển động của hệ điều hành */
+@media (prefers-reduced-motion: reduce) {
+  .piece-slide {
+    animation: none;
+  }
+}

@@ -98,16 +98,17 @@ export function searchPosition(fen: string, config: SearchConfig): SearchAnalysi
 }
 
 function searchRoot(ctx: SearchContext, rootMoves: Move[], depth: number): ScoredRootMove[] {
-  let alpha = -INFINITY
   const scored: ScoredRootMove[] = []
 
   for (const move of rootMoves) {
     ctx.game.move({ from: move.from, to: move.to, promotion: move.promotion })
-    const score = -negamax(ctx, depth - 1, -INFINITY, -alpha, 1)
+    // Cửa sổ đầy đủ ở gốc: mọi nước gốc đều có điểm CHÍNH XÁC.
+    // Nếu thu hẹp alpha sau khi tìm thấy chiếu hết, các nước còn lại
+    // bị cắt bởi beta = -MATE → điểm bị "đảo" thành MATE và xếp sai.
+    const score = -negamax(ctx, depth - 1, -INFINITY, INFINITY, 1)
     ctx.game.undo()
 
     scored.push({ move, scoreCp: score })
-    if (score > alpha) alpha = score
   }
 
   scored.sort((a, b) => b.scoreCp - a.scoreCp)

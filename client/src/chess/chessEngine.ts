@@ -27,6 +27,16 @@ export class ChessGame {
     this.game.reset()
   }
 
+  /** Nạp vị trí từ FEN (khôi phục ván đã lưu / kiểm thử); FEN sai → false, giữ nguyên trạng thái */
+  loadFen(fen: string): boolean {
+    try {
+      this.game.load(fen)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   getFen(): string {
     return this.game.fen()
   }
@@ -132,4 +142,17 @@ function toMoveRecord(move: Move): MoveRecord {
     captured: move.captured ? toPieceType(move.captured) : null,
     promotion: move.promotion ? toPieceType(move.promotion) : null,
   }
+}
+
+/** Truy vấn ô đích hợp lệ từ một FEN bất kỳ (dùng cho chế độ Online:
+ * server là nguồn sự thật, client chỉ mở gợi ý nước đi cho UI) */
+export function getLegalTargetsFromFen(fen: string, from: SquareName): SquareName[] {
+  const probe = new Chess(fen)
+  return getLegalTargetSquares(probe, from)
+}
+
+/** Nước from → to trên FEN có phải phong cấp không */
+export function isPromotionNeededFromFen(fen: string, from: SquareName, to: SquareName): boolean {
+  const probe = new Chess(fen)
+  return isPromotionMove(probe, from, to)
 }

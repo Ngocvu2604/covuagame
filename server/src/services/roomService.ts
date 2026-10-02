@@ -59,13 +59,28 @@ export class RoomService {
 
     const room = this.roomManager.findByCode(data.code.toUpperCase())
     if (!room) return { ok: false, error: 'ROOM_NOT_FOUND' }
+    console.log(`[room ${room.code}] join attempt: name=${data.playerName} status=${room.status} players=${room.players.map((p) => `${p.name}(${p.connected ? 'on' : 'off'})`).join(',')}`)
     touch(room)
 
     const name = data.playerName.trim()
 
-    // Kết nối lại: có slot cùng tên đang mất kết nối → lấy lại chỗ cũ
+    // Kết nối lại: có slot cùng tên → lấy lại chỗ cũ. Chấp nhận cả trường hợp
+    // server chưa kịp đánh dấu mất kết nối (refresh/reconnect rất nhanh).
+    // Không có hệ thống tài khoản nên tên là định danh phiên (mục 11).
     const existing = findPlayerByName(room, name)
-    if (existing && !existing.connected) {
+    if (existing) {
+      if (existing.socketId === socket.id) {
+        // Chính socket này join lại → trả trạng thái hiện tại, không phát sự kiện
+        const state = this.gameManager.getState(room.code)
+        return {
+          ok: true,
+          room: toPublicData(room),
+          color: existing.color,
+          state,
+          clock: this.gameManager.getClock(room.code),
+          chat: [...room.messages],
+        }
+      }
       const oldSocketId = existing.socketId
       this.clearDisconnectTimer(oldSocketId)
       this.roomManager.unregisterSocket(oldSocketId)
@@ -77,8 +92,18 @@ export class RoomService {
         name: existing.name,
         color: existing.color,
       })
+      this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
       const state = this.gameManager.getState(room.code)
-      return { ok: true, room: toPublicData(room), color: existing.color, state }
+      const clock = this.gameManager.getClock(room.code)
+      // Người reconnect nhận lại lịch sử chat đã bỏ lỡ
+      return {
+        ok: true,
+        room: toPublicData(room),
+        color: existing.color,
+        state,
+        clock,
+        chat: [...room.messages],
+      }
     }
 
     if (room.status === 'finished') return { ok: false, error: 'ROOM_FINISHED' }
@@ -95,20 +120,23 @@ export class RoomService {
     this.roomManager.setStatus(room, 'playing')
     this.gameManager.createGame(room.code, room.timeMinutes)
     const state = this.gameManager.getState(room.code)
+    const clock = this.gameManager.getClock(room.code)
 
     this.io.to(room.code).emit(SOCKET_EVENTS.GAME_STARTED, {
       room: toPublicData(room),
       state: state,
+      clock,
     })
     this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
 
-    return { ok: true, room: toPublicData(room), color, state }
+    return { ok: true, room: toPublicData(room), color, state, clock }
   }
 
   /** Rời phòng chủ động: đang chơi thì coi như đầu hàng */
   leaveRoom(socket: Socket): void {
     const code = this.roomManager.findCodeBySocket(socket.id)
     if (!code) return
+    console.log(`[room ${code}] leave requested by socket ${socket.id}`)
     const room = this.roomManager.findByCode(code)
     if (!room) return
     const player = findPlayerBySocket(room, socket.id)
@@ -139,9 +167,11 @@ export class RoomService {
     }
 
     player.connected = false
+    console.log(`[room ${room.code}] disconnect: ${player.name} status=${room.status}`)
     this.io
       .to(room.code)
       .emit(SOCKET_EVENTS.PLAYER_DISCONNECTED, { name: player.name, color: player.color })
+    this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
 
     if (room.status === 'playing') {
       const timer = setTimeout(() => {
@@ -151,6 +181,7 @@ export class RoomService {
         const still = findPlayerBySocket(current, socket.id)
         if (!still || still.connected) return
         // Quá thời gian chờ không reconnect → xử thua
+        console.log(`[room ${room.code}] grace timer expired → ${player.name} loses`)
         const outcome = this.gameManager.resign(room.code, player.color)
         if (outcome.ok) this.finishGame(current, outcome.result, outcome.state)
       }, this.config.disconnectGraceMs)
@@ -160,13 +191,19 @@ export class RoomService {
     }
   }
 
-  /** Kết thúc ván: cập nhật phòng + phát kết quả cho cả phòng */
+  /** Kết thúc ván: cập nhật phòng + phát kết quả cho cả phòng.
+   * `result` do tầng app quyết định (đầu hàng/hết giờ/thỏa thuận) nên được
+   * merge vào state — vị trí cờ bản thân nó không mang kết quả này. */
   finishGame(room: Room, result: GameResult, state: GameState): void {
+    console.log(`[room ${room.code}] game finished: ${result.reason} winner=${result.winner ?? 'draw'}`)
     this.roomManager.setStatus(room, 'finished')
     room.drawOfferedBy = null
     room.rematchOfferedBy = null
     touch(room)
-    this.io.to(room.code).emit(SOCKET_EVENTS.GAME_OVER, { result, state })
+    const stateWithResult: GameState = { ...state, result }
+    this.io
+      .to(room.code)
+      .emit(SOCKET_EVENTS.GAME_OVER, { result, state: stateWithResult, clock: this.gameManager.getClock(room.code) })
     this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
   }
 

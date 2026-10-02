@@ -34,17 +34,23 @@ export class GameService {
       return
     }
 
-    const outcome = this.gameManager.tryMove(room.code, player.color, data)
+    const outcome = this.gameManager.tryMove(room.code, player.color, {
+      from: data.from,
+      to: data.to,
+      promotion: data.promotion,
+    })
     if (!outcome.ok) {
       ack({ ok: false, error: outcome.error })
       return
     }
 
     touch(room)
-    ack({ ok: true, move: outcome.record, state: outcome.state })
+    const clock = this.gameManager.getClock(room.code)
+    ack({ ok: true, move: outcome.record, state: outcome.state, clock })
     this.io.to(room.code).emit(SOCKET_EVENTS.GAME_MOVE_APPLIED, {
       move: outcome.record,
       state: outcome.state,
+      clock,
     })
 
     if (outcome.state.result) {
@@ -166,6 +172,7 @@ export class GameService {
     this.io.to(room.code).emit(SOCKET_EVENTS.GAME_STARTED, {
       room: toPublicData(room),
       state: state,
+      clock: this.gameManager.getClock(room.code),
     })
     this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
     ack({ ok: true })

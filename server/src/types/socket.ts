@@ -1,5 +1,5 @@
 import type { GameState, GameResult, MoveRecord, PlayerColor } from './game'
-import type { RoomPublicData } from './room'
+import type { ChatMessage, RoomPublicData } from './room'
 
 /** Tên các sự kiện Socket.IO dùng chung server/client */
 export const SOCKET_EVENTS = {
@@ -25,6 +25,9 @@ export const SOCKET_EVENTS = {
   GAME_REMATCH_OFFER: 'game:rematch:offer',
   GAME_REMATCH_ACCEPT: 'game:rematch:accept',
   GAME_REMATCH_OFFERED: 'game:rematch:offered',
+  // Chat
+  CHAT_SEND: 'chat:send',
+  CHAT_MESSAGE: 'chat:message',
 } as const
 
 export interface CreateRoomPayload {
@@ -57,6 +60,9 @@ export interface JoinAckData {
   color?: PlayerColor
   /** Trạng thái hiện tại (có khi tham gia phòng đang chơi / kết nối lại) */
   state?: GameState | null
+  clock?: ClockInfo | null
+  /** Lịch sử chat (khi kết nối lại vào phòng đang chơi) */
+  chat?: ChatMessage[]
   error?: string
 }
 
@@ -64,6 +70,7 @@ export interface MoveAckData {
   ok: boolean
   move?: MoveRecord
   state?: GameState
+  clock?: ClockInfo | null
   error?: string
 }
 
@@ -79,16 +86,19 @@ export interface RoomUpdatedPayload {
 export interface GameStartedPayload {
   room: RoomPublicData
   state: GameState
+  clock?: ClockInfo | null
 }
 
 export interface MoveAppliedPayload {
   move: MoveRecord
   state: GameState
+  clock?: ClockInfo | null
 }
 
 export interface GameOverPayload {
   result: GameResult
   state: GameState
+  clock?: ClockInfo | null
 }
 
 export interface PlayerConnectionPayload {
@@ -98,4 +108,17 @@ export interface PlayerConnectionPayload {
 
 export interface OfferedPayload {
   from: PlayerColor
+}
+
+/** Thời gian còn lại của 2 bên (server là nguồn sự thật, client nội suy hiển thị) */
+export interface ClockInfo {
+  whiteMs: number
+  blackMs: number
+}
+
+/** Gọi ack callback nếu client có gửi (socket.io cho phép emit không ack) */
+export function replyAck(ack: unknown, data: unknown): void {
+  if (typeof ack === 'function') {
+    (ack as (data: unknown) => void)(data)
+  }
 }
