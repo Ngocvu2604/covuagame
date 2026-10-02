@@ -119,8 +119,7 @@ npm run build
 ## web
 
 ```bash
-npm run server
-# → http://vuacovua.id.vn
+http://vuacovua.id.vn
 ```
 ## Test tự động
 
