@@ -75,3 +75,33 @@ export interface MovePayload {
   to: string
   promotion?: string
 }
+
+/**
+ * Hợp đồng của provider online (Socket.IO hoặc Appwrite).
+ * Cả hai provider emit/cùng kiểu payload nên pages và hooks
+ * không cần biết phía sau là gì.
+ */
+export interface GameSyncHandlers {
+  onRoomUpdated: (payload: RoomUpdatedPayload) => void
+  onGameStarted: (payload: GameStartedPayload) => void
+  onMoveApplied: (payload: MoveAppliedPayload) => void
+  onGameOver: (payload: GameOverPayload) => void
+  onPlayerDisconnected: (payload: PlayerConnectionPayload) => void
+  onPlayerReconnected: (payload: PlayerConnectionPayload) => void
+  onDrawOffered: (payload: OfferedPayload) => void
+  onDrawDeclined: (payload: OfferedPayload) => void
+  onRematchOffered: (payload: OfferedPayload) => void
+  onChatMessage: (payload: ChatMessage) => void
+}
+
+export interface GameSyncProvider {
+  subscribe: (handlers: GameSyncHandlers) => () => void
+  sendMove: (payload: MovePayload) => Promise<MoveAckData>
+  sendResign: () => Promise<SimpleAckData>
+  sendDrawOffer: () => Promise<SimpleAckData>
+  sendDrawAccept: () => Promise<SimpleAckData>
+  sendDrawDecline: () => Promise<SimpleAckData>
+  sendRematchOffer: () => Promise<SimpleAckData>
+  sendRematchAccept: () => Promise<SimpleAckData>
+  sendChat: (text: string) => Promise<SimpleAckData>
+}

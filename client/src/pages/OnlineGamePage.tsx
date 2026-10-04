@@ -14,10 +14,12 @@ import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
 import { ErrorMessage } from '../components/common/ErrorMessage'
 import { RoomCode } from '../components/room/RoomCode'
+import { CopyInviteLinkButton } from '../components/room/CopyInviteLinkButton'
 import { CopyRoomCodeButton } from '../components/room/CopyRoomCodeButton'
 import { RoomStatus } from '../components/room/RoomStatus'
 import { useOnlineGame } from '../hooks/useOnlineGame'
 import { useGameSoundEvents } from '../hooks/useSound'
+import { soundService } from '../services/soundService'
 import { useRoomStore } from '../state/roomStore'
 import { leaveRoom } from '../online/roomService'
 import { opposite } from '../chess/chessUtils'
@@ -42,6 +44,7 @@ export function OnlineGamePage() {
     rematchOfferFrom,
     chatMessages,
     opponentDisconnected,
+    restoring,
     handleSquareClick,
     completePromotion,
     cancelPromotion,
@@ -68,13 +71,21 @@ export function OnlineGamePage() {
     return () => clearInterval(timer)
   }, [opponentDisconnected])
 
-  // Vào trang trực tiếp mà không có phiên phòng (F5 mất store) → về sảnh
+  // Vào trang trực tiếp mà không có phiên phòng (F5 mất store) → về sảnh.
+  // Nếu đang khôi phục phiên từ localStorage thì chờ, không đá về sảnh.
   useEffect(() => {
     if (!room || !yourColor) {
-      navigate('/online', { replace: true })
+      if (!restoring) navigate('/online', { replace: true })
     }
-  }, [room, yourColor, navigate])
+  }, [room, yourColor, restoring, navigate])
 
+  if ((!room || !yourColor) && !restoring) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
+        <p className="animate-pulse text-sm text-slate-400">Đang khôi phục phiên phòng…</p>
+      </main>
+    )
+  }
   if (!room || !yourColor) return null
 
   const opponentColor = opposite(yourColor)
@@ -92,8 +103,9 @@ export function OnlineGamePage() {
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
         <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
           <h2 className="text-xl font-bold">Phòng đã được tạo!</h2>
-          <p className="text-sm text-slate-400">Chia sẻ mã này cho đối thủ của bạn:</p>
+          <p className="text-sm text-slate-400">Chia sẻ mã hoặc link mời cho đối thủ của bạn:</p>
           <RoomCode code={room.code} />
+          <CopyInviteLinkButton code={room.code} />
           <CopyRoomCodeButton code={room.code} />
           <RoomStatus text="Đang chờ đối thủ tham gia…" />
           <Button variant="ghost" onClick={handleLeave}>
@@ -153,6 +165,7 @@ export function OnlineGamePage() {
               lastMove={gameState?.lastMove ?? null}
               lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={gameState?.checkSquare ?? null}
+              onPieceHover={() => soundService.playHover()}
               disabled={!isMyTurn}
               onSquareClick={handleSquareClick}
             />

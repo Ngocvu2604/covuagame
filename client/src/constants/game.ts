@@ -10,6 +10,7 @@ export const END_REASON_LABELS: Record<GameEndReason, string> = {
   'insufficient-material': 'Không đủ lực lượng chiếu hết',
   resignation: 'Đầu hàng',
   timeout: 'Hết giờ',
+  abandoned: 'Đối thủ rời trận quá lâu',
   agreement: 'Thỏa thuận hòa',
 }
 

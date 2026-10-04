@@ -17,6 +17,8 @@ interface ChessSquareProps {
   slideFrom?: { x: number; y: number }
   /** Nước cuối là nước ăn quân → hiệu ứng ring tại ô đích */
   captureKey?: string
+  /** Rê chuột vào quân cờ trên ô này (chỉ gọi khi ô có quân và ô đang tương tác) */
+  onPieceHover?: () => void
   /** Nhãn tọa độ hiển thị trong ô (hàng dọc bên trái / hàng ngang dưới) */
   rankLabel?: string | null
   fileLabel?: string | null
@@ -36,6 +38,7 @@ export function ChessSquare({
   isCheck,
   slideFrom,
   captureKey,
+  onPieceHover,
   rankLabel,
   fileLabel,
   interactive,
@@ -54,6 +57,9 @@ export function ChessSquare({
       data-square={square}
       aria-label={`${square}${piece ? ` ${piece.color} ${piece.type}` : ' empty'}`}
       onClick={() => onSquareClick(square)}
+      onMouseEnter={() => {
+        if (piece && interactive) onPieceHover?.()
+      }}
       className={`group relative flex items-center justify-center ${squareClass} focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${
         interactive && piece ? 'square-interactive' : ''
       }`}

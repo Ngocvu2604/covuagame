@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PieceOnSquare, PieceType, PlayerColor, SquareName } from '../types/chess'
 import { getLegalTargetsFromFen, isPromotionNeededFromFen } from '../chess/chessEngine'
 import { toPieceSymbol } from '../chess/chessUtils'
-import { useRoomStore } from '../state/roomStore'
+import { useRoomStore, getActiveRoomCode, clearActiveRoom } from '../state/roomStore'
 import { pushToast } from '../state/uiStore'
+import { usePlayerStore } from '../state/playerStore'
 import {
   sendChat,
   sendDrawAccept,
@@ -16,6 +17,7 @@ import {
   subscribeGameEvents,
 } from '../online/gameSync'
 import { attachAutoRejoin } from '../online/reconnect'
+import { joinRoom, prepareConnection } from '../online/roomService'
 
 /**
  * Điều khiển ván Online cho UI: lắng nghe sự kiện server → roomStore,
@@ -69,6 +71,35 @@ export function useOnlineGame() {
 
   // Socket kết nối lại (mất mạng) → tự động lấy lại chỗ trong phòng
   useEffect(() => attachAutoRejoin(), [])
+
+  // Refresh trang: khôi phục phiên từ code phòng đã lưu trong localStorage (mục 12)
+  const [restoring, setRestoring] = useState<boolean>(() => !useRoomStore.getState().room && !!getActiveRoomCode())
+  useEffect(() => {
+    if (!restoring) return
+    const code = getActiveRoomCode()
+    if (!code) {
+      setRestoring(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        await prepareConnection(usePlayerStore.getState().name || 'Người chơi')
+        const ack = await joinRoom(usePlayerStore.getState().name || 'Người chơi', code)
+        if (!cancelled && ack.ok && ack.room && ack.color) {
+          useRoomStore.getState().applyJoin(ack)
+        } else if (!cancelled) {
+          clearActiveRoom()
+        }
+      } catch {
+        clearActiveRoom()
+      }
+      if (!cancelled) setRestoring(false)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [restoring])
 
   // Nước mới đến (của mình hoặc đối thủ) → bỏ selection cũ
   const fen = gameState?.fen ?? null
@@ -202,6 +233,7 @@ export function useOnlineGame() {
     myInfo,
     opponentInfo,
     opponentDisconnected,
+    restoring,
     isMyTurn,
     selectedSquare,
     legalTargets,

@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage'
 import { OfflineGamePage } from './pages/OfflineGamePage'
 import { OnlineLobbyPage } from './pages/OnlineLobbyPage'
 import { OnlineGamePage } from './pages/OnlineGamePage'
+import { OnlineInvitePage } from './pages/OnlineInvitePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { useSound } from './hooks/useSound'
 import { useSettingsStore } from './state/settingsStore'
@@ -30,6 +31,8 @@ export default function App() {
         <Route path="/offline" element={<OfflineGamePage />} />
         <Route path="/online" element={<OnlineLobbyPage />} />
         <Route path="/online/game" element={<OnlineGamePage />} />
+        {/* Trang đích của invite link: #/game/CODE */}
+        <Route path="/game/:code" element={<OnlineInvitePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

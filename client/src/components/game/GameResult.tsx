@@ -12,6 +12,7 @@ const RESULT_TITLES: Record<GameResultType['reason'], string> = {
   'insufficient-material': 'DRAW',
   resignation: 'RESIGNATION',
   timeout: 'TIME OUT',
+  abandoned: 'ABANDONED',
   agreement: 'DRAW',
 }
 

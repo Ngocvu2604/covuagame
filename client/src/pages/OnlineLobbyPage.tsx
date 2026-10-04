@@ -6,24 +6,9 @@ import { ErrorMessage } from '../components/common/ErrorMessage'
 import { TIME_CONTROL_OPTIONS } from '../constants/game'
 import { usePlayerStore } from '../state/playerStore'
 import { useRoomStore } from '../state/roomStore'
-import { connectSocket } from '../online/socketClient'
-import { createRoom, joinRoom } from '../online/roomService'
+import { createRoom, describeRoomError, joinRoom, prepareConnection } from '../online/roomService'
 import { isValidPlayerName, isValidRoomCode } from '../utils/validation'
 import type { CreateAckData, JoinAckData } from '../types/socket'
-
-const ERROR_MESSAGES: Record<string, string> = {
-  ROOM_NOT_FOUND: 'Không tìm thấy phòng.',
-  ROOM_FULL: 'Phòng đã đầy.',
-  ROOM_FINISHED: 'Phòng này không còn hoạt động.',
-  INVALID_CODE: 'Mã phòng không hợp lệ.',
-  INVALID_NAME: 'Tên người chơi không hợp lệ.',
-  INVALID_TIME_CONTROL: 'Thời gian không hợp lệ.',
-  ACK_TIMEOUT: 'Máy chủ không phản hồi.',
-}
-
-function describeError(code?: string): string {
-  return (code && ERROR_MESSAGES[code]) || 'Không thể kết nối máy chủ.'
-}
 
 type ColorChoice = 'white' | 'black' | 'random'
 
@@ -62,22 +47,10 @@ export function OnlineLobbyPage() {
 
   const enterRoom = (ack: CreateAckData | JoinAckData) => {
     if (!ack.ok || !ack.room || !ack.color) {
-      setError(describeError(ack.error))
+      setError(describeRoomError(ack.error))
       return
     }
-    const store = useRoomStore.getState()
-    store.reset()
-    store.setRoom(ack.room)
-    store.setYourColor(ack.color)
-    if ('state' in ack && ack.state) {
-      store.setGameState(ack.state)
-    }
-    if ('clock' in ack) {
-      store.setClock(ack.clock, Date.now())
-    }
-    if ('chat' in ack && ack.chat) {
-      store.setChat(ack.chat)
-    }
+    useRoomStore.getState().applyJoin(ack)
     navigate('/online/game')
   }
 
@@ -87,11 +60,11 @@ export function OnlineLobbyPage() {
     setBusy(true)
     setError(null)
     try {
-      connectSocket(playerName)
+      await prepareConnection(playerName)
       const ack = await createRoom({ playerName, colorChoice, timeMinutes })
       enterRoom(ack)
     } catch {
-      setError(describeError())
+      setError(describeRoomError())
     } finally {
       setBusy(false)
     }
@@ -108,11 +81,11 @@ export function OnlineLobbyPage() {
     setBusy(true)
     setError(null)
     try {
-      connectSocket(playerName)
+      await prepareConnection(playerName)
       const ack = await joinRoom(playerName, normalizedCode)
       enterRoom(ack)
     } catch {
-      setError(describeError())
+      setError(describeRoomError())
     } finally {
       setBusy(false)
     }

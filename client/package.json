@@ -12,6 +12,7 @@
     "test:ai": "tsx scripts/aiTest.ts"
   },
   "dependencies": {
+    "appwrite": "^28.1.0",
     "chess.js": "^1.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

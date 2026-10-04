@@ -11,6 +11,8 @@ export interface PlayerPublicInfo {
 }
 
 export interface RoomPublicData {
+  /** Appwrite: id document phòng (undefined trên socket provider) */
+  id?: string
   code: string
   status: RoomStatus
   timeMinutes: number | null

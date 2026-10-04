@@ -55,6 +55,7 @@ export type GameEndReason =
   | 'insufficient-material'
   | 'resignation'
   | 'timeout'
+  | 'abandoned'
   | 'agreement'
 
 /** Kết quả trận đấu — winner = null nghĩa là hòa */

@@ -24,6 +24,8 @@ interface ChessBoardProps {
   /** Nước cuối là nước ăn quân → hiệu ứng ring tại ô đích */
   lastMoveIsCapture?: boolean
   checkSquare: SquareName | null
+  /** Rê chuột qua một quân cờ (chỉ gọi với ô có quân, bàn đang tương tác) */
+  onPieceHover?: (square: SquareName) => void
   /** Chặn tương tác (khi ván đã kết thúc / tới lượt đối thủ) */
   disabled?: boolean
   onSquareClick: (square: SquareName) => void
@@ -42,6 +44,7 @@ export function ChessBoard({
   lastMove,
   lastMoveIsCapture = false,
   checkSquare,
+  onPieceHover,
   disabled = false,
   onSquareClick,
 }: ChessBoardProps) {
@@ -109,6 +112,7 @@ export function ChessBoard({
                 isCheck={square === checkSquare}
                 slideFrom={slideFrom?.square === square ? { x: slideFrom.x, y: slideFrom.y } : undefined}
                 captureKey={lastMoveIsCapture && lastMove?.to === square ? `cap-${lastMove.from}${lastMove.to}` : undefined}
+                onPieceHover={onPieceHover ? () => onPieceHover(square) : undefined}
                 rankLabel={showCoordinates && colIndex === 0 ? rank : null}
                 fileLabel={showCoordinates && rowIndex === 7 ? file.toUpperCase() : null}
                 interactive={!disabled}

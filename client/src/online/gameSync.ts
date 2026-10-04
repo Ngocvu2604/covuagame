@@ -1,35 +1,55 @@
-import type { Socket } from 'socket.io-client'
 import type {
-  GameOverPayload,
-  GameStartedPayload,
+  GameSyncHandlers,
+  GameSyncProvider,
   MoveAckData,
-  MoveAppliedPayload,
   MovePayload,
-  OfferedPayload,
-  PlayerConnectionPayload,
-  RoomUpdatedPayload,
   SimpleAckData,
 } from '../types/socket'
-import type { ChatMessage } from '../types/room'
-import { SOCKET_EVENTS } from '../constants/socketEvents'
 import { emitAck, getSocket } from './socketClient'
+import { SOCKET_EVENTS } from '../constants/socketEvents'
+import { isAppwriteConfigured } from './appwrite/client'
+import { createAppwriteProvider } from './appwrite/gameSync'
 
 /**
- * Đồng bộ ván đấu: đăng ký lắng nghe sự kiện server → đẩy vào roomStore,
- * và gửi các hành động của người chơi lên server.
+ * Dispatcher của tầng online: chọn provider theo cấu hình.
+ * - Có VITE_APPWRITE_*  → Appwrite (Database + Realtime, chạy 24/7 trên cloud)
+ * - Không có            → Socket.IO server tự host (local dev / VPS)
+ *
+ * Pages và hooks chỉ gọi các hàm dưới đây — không biết phía sau là gì.
  */
 
-export interface GameSyncHandlers {
-  onRoomUpdated: (payload: RoomUpdatedPayload) => void
-  onGameStarted: (payload: GameStartedPayload) => void
-  onMoveApplied: (payload: MoveAppliedPayload) => void
-  onGameOver: (payload: GameOverPayload) => void
-  onPlayerDisconnected: (payload: PlayerConnectionPayload) => void
-  onPlayerReconnected: (payload: PlayerConnectionPayload) => void
-  onDrawOffered: (payload: OfferedPayload) => void
-  onDrawDeclined: (payload: OfferedPayload) => void
-  onRematchOffered: (payload: OfferedPayload) => void
-  onChatMessage: (payload: ChatMessage) => void
+export type { GameSyncHandlers } from '../types/socket'
+
+function createSocketProvider(): GameSyncProvider {
+  return {
+    subscribe(handlers: GameSyncHandlers): () => void {
+      const socket = getSocket()
+
+      const listeners = Object.entries(EVENT_HANDLERS).map(([event, handlerName]) => {
+        const handler = handlers[handlerName] as (payload: unknown) => void
+        const listener = (...args: unknown[]) => {
+          handler(args[0])
+        }
+        socket.on(event, listener)
+        return { event, listener }
+      })
+
+      return () => {
+        for (const { event, listener } of listeners) {
+          socket.off(event, listener)
+        }
+      }
+    },
+
+    sendMove: (payload: MovePayload) => emitAck<MoveAckData>(SOCKET_EVENTS.GAME_MOVE, payload),
+    sendResign: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_RESIGN),
+    sendDrawOffer: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_OFFER),
+    sendDrawAccept: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_ACCEPT),
+    sendDrawDecline: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_DECLINE),
+    sendRematchOffer: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_OFFER),
+    sendRematchAccept: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_ACCEPT),
+    sendChat: (text: string) => emitAck<SimpleAckData>(SOCKET_EVENTS.CHAT_SEND, { text }),
+  }
 }
 
 const EVENT_HANDLERS = {
@@ -45,54 +65,47 @@ const EVENT_HANDLERS = {
   [SOCKET_EVENTS.CHAT_MESSAGE]: 'onChatMessage',
 } as const
 
-/** Đăng ký mọi sự kiện realtime; trả về hàm hủy đăng ký */
-export function subscribeGameEvents(handlers: GameSyncHandlers): () => void {
-  const socket: Socket = getSocket()
+let provider: GameSyncProvider | null = null
 
-  const listeners = Object.entries(EVENT_HANDLERS).map(([event, handlerName]) => {
-    const handler = handlers[handlerName] as (payload: unknown) => void
-    const listener = (...args: unknown[]) => {
-      handler(args[0])
-    }
-    socket.on(event, listener)
-    return { event, listener }
-  })
-
-  return () => {
-    for (const { event, listener } of listeners) {
-      socket.off(event, listener)
-    }
+export function getGameSyncProvider(): GameSyncProvider {
+  if (!provider) {
+    provider = isAppwriteConfigured() ? createAppwriteProvider() : createSocketProvider()
   }
+  return provider
+}
+
+export function subscribeGameEvents(handlers: GameSyncHandlers): () => void {
+  return getGameSyncProvider().subscribe(handlers)
 }
 
 export function sendMove(payload: MovePayload): Promise<MoveAckData> {
-  return emitAck<MoveAckData>(SOCKET_EVENTS.GAME_MOVE, payload)
+  return getGameSyncProvider().sendMove(payload)
 }
 
 export function sendResign(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_RESIGN)
+  return getGameSyncProvider().sendResign()
 }
 
 export function sendDrawOffer(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_OFFER)
+  return getGameSyncProvider().sendDrawOffer()
 }
 
 export function sendDrawAccept(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_ACCEPT)
+  return getGameSyncProvider().sendDrawAccept()
 }
 
 export function sendDrawDecline(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_DECLINE)
+  return getGameSyncProvider().sendDrawDecline()
 }
 
 export function sendRematchOffer(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_OFFER)
+  return getGameSyncProvider().sendRematchOffer()
 }
 
 export function sendRematchAccept(): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_ACCEPT)
+  return getGameSyncProvider().sendRematchAccept()
 }
 
 export function sendChat(text: string): Promise<SimpleAckData> {
-  return emitAck<SimpleAckData>(SOCKET_EVENTS.CHAT_SEND, { text })
+  return getGameSyncProvider().sendChat(text)
 }

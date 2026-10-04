@@ -6,7 +6,8 @@ Website chơi cờ vua trên nền tảng Web với 2 chế độ: **chơi với
 
 - **Chơi với máy Offline** — hoạt động 100% phía client, không cần Internet
 - **3 mức độ AI**: 🟢 Tân Binh (dễ, có sai lầm chủ ý) · 🟡 Kỳ Thủ (trung bình) · 🔴 Đại Kiện Tướng (Minimax + Alpha-Beta + Quiescence, chạy trong Web Worker)
-- **Chơi Online** — tạo phòng / tham gia bằng mã phòng 6 ký tự, nước đi realtime, server xác thực mọi nước đi (anti-cheat)
+- **Chơi Online** — tạo phòng / tham gia bằng mã phòng 6 ký tự hoặc **invite link**, nước đi realtime
+- **Online 24/7 với Appwrite Cloud** — Anonymous Session + Database + Realtime, không cần server riêng (xem `APPWRITE_SETUP.md`); client tự chọn provider qua env `VITE_APPWRITE_*` (không có env → Socket.IO server)
 - **Đầy đủ luật cờ vua**: chiếu, chiếu hết, hòa (stalemate, lặp 3 lần, luật 50 nước, thiếu lực lượng), nhập thành 2 cánh, bắt tốt qua đường, phong cấp
 - **8 Board Theme**: Classic / Wood / Green / Blue / Purple / Dark / Neon / Minimal — đổi ngay lập tức, lưu localStorage
 - **8 Piece Set**: Classic / Modern / Minimal / Glass / 3D / Fantasy / Neon / Wooden — quân Trắng luôn sáng, quân Đen luôn tối
@@ -155,7 +156,7 @@ Mọi thứ chạy hoàn toàn phía client — mất Internet vẫn chơi bình
 1. Chọn **🌐 Chơi Online**
 2. Nhập tên của bạn, chọn quân + thời gian
 3. Nhấn **🏠 Tạo phòng** → hệ thống tạo **Room Code** (ví dụ `X7K9P2`)
-4. Nhấn **📋 Copy mã phòng** và gửi cho đối thủ
+4. Nhấn **🔗 Copy invite link** (hoặc 📋 copy mã) và gửi cho đối thủ — đối thủ mở link sẽ vào thẳng phòng
 5. Chờ đối thủ tham gia — ván bắt đầu tự động
 
 ## How to Join Room

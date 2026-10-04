@@ -16,3 +16,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Cho phép commit file mẫu env
+!.env.example
+!.env*.example

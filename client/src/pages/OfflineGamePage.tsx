@@ -13,6 +13,7 @@ import { useChessGame } from '../hooks/useChessGame'
 import { useChessAI } from '../hooks/useChessAI'
 import { useChessClock } from '../hooks/useChessClock'
 import { useGameSoundEvents } from '../hooks/useSound'
+import { soundService } from '../services/soundService'
 import { useGameStore } from '../state/gameStore'
 import { useSettingsStore } from '../state/settingsStore'
 import { usePlayerStore } from '../state/playerStore'
@@ -241,6 +242,7 @@ export function OfflineGamePage() {
               lastMove={state.lastMove}
               lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={state.checkSquare}
+              onPieceHover={() => soundService.playHover()}
               disabled={state.result !== null || state.turn === aiColor}
               onSquareClick={handleSquareClick}
             />
