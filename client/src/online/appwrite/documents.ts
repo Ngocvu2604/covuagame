@@ -41,6 +41,7 @@ export interface RoomDocument {
 
 export interface MoveDocument {
   $id: string
+  $createdAt: string
   roomId: string
   gameNumber: number
   ply: number

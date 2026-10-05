@@ -32,7 +32,11 @@ function colorOf(move: MoveDocument, room: RoomDocument): PlayerColor | null {
 /** Replay toàn bộ nước đi của một ván (gameNumber) trong phòng → GameState */
 export function replayMoves(moves: MoveDocument[], room: RoomDocument): ReplayResult {
   const game = new Chess()
-  const ordered = [...moves].sort((a, b) => a.ply - b.ply)
+  // Tất định: ply tăng dần; trùng ply thì document tạo TRƯỚC thắng
+  // (2 client cùng ghi ply do race → mọi client chọn cùng một entry)
+  const ordered = [...moves].sort(
+    (a, b) => a.ply - b.ply || a.$createdAt.localeCompare(b.$createdAt),
+  )
   const moveHistory: MoveRecord[] = []
 
   let expectedPly = 1

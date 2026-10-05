@@ -36,7 +36,10 @@ import { pushToast } from '../../state/uiStore'
  */
 
 const PRESENCE_INTERVAL_MS = 10_000
-const ABANDON_AFTER_MS = 60_000
+/** 5 phút — đủ rộng cho tab nền bị throttle timer (presence có thêm đường realtime) */
+const ABANDON_AFTER_MS = 300_000
+/** Khoảng nghỉ tối thiểu giữa 2 lần touch presence qua realtime events */
+const PRESENCE_TOUCH_THROTTLE_MS = 8_000
 
 function colorOfUser(userId: string, doc: RoomDocument): PlayerColor | null {
   if (userId === doc.whitePlayerId) return 'white'
@@ -62,21 +65,43 @@ class AppwriteSync implements GameSyncProvider {
   private lastEmittedRematchOffer = ''
   private gameOverHandledGame = -1
   private starting = false
+  private lastPresenceTouch = 0
+  private waitTimer: number | null = null
 
   subscribe(handlers: GameSyncHandlers): () => void {
     this.handlers = handlers
     const room = useRoomStoreSnapshot()
-    if (!room?.id) {
+    if (room?.id) {
+      if (!this.starting) {
+        this.starting = true
+        void this.init(room.id)
+      }
       return () => this.teardown()
     }
-    if (!this.starting) {
-      this.starting = true
-      void this.init(room.id)
-    }
+
+    // Chưa có phòng (ví dụ đang khôi phục phiên sau refresh): đợi store
+    // có phòng rồi mới init — nếu không, provider sẽ không bao giờ khởi
+    // động và mọi send/realtime đều im lặng.
+    this.waitTimer = window.setInterval(() => {
+      const pending = useRoomStoreSnapshot()
+      if (pending?.id) {
+        window.clearInterval(this.waitTimer ?? 0)
+        this.waitTimer = null
+        if (!this.starting) {
+          this.starting = true
+          void this.init(pending.id)
+        }
+      }
+    }, 250)
     return () => this.teardown()
   }
 
+
   private teardown(): void {
+    if (this.waitTimer !== null) {
+      window.clearInterval(this.waitTimer)
+      this.waitTimer = null
+    }
     for (const unsub of this.unsubscribes) unsub()
     this.unsubscribes = []
     for (const timer of this.timers) clearInterval(timer)
@@ -110,6 +135,13 @@ class AppwriteSync implements GameSyncProvider {
           clock: clockFromDoc(doc),
         })
       }
+      // Phòng đã kết thúc trước đó (reload giữa/khi sau ván) → phát lại kết quả
+      if (doc.status === 'finished') {
+        const result = docResult(doc)
+        if (result) {
+          this.handlers?.onGameOver({ result, state: this.buildState(), clock: clockFromDoc(doc) })
+        }
+      }
 
       const roomChannel = `databases.${DATABASE_ID}.collections.${ROOMS_COLLECTION_ID}.documents.${roomId}`
       const movesChannel = `databases.${DATABASE_ID}.collections.${MOVES_COLLECTION_ID}.documents`
@@ -117,14 +149,17 @@ class AppwriteSync implements GameSyncProvider {
 
       this.unsubscribes.push(
         client.subscribe(roomChannel, (response) => {
+          void this.touchPresence()
           this.onRoomDocChanged(response.payload as RoomDocument)
         }),
         client.subscribe(movesChannel, (response) => {
+          void this.touchPresence()
           const payload = response.payload as MoveDocument
           if (payload.roomId !== roomId) return
           this.onMoveDocArrived(payload)
         }),
         client.subscribe(messagesChannel, (response) => {
+          void this.touchPresence()
           const payload = response.payload as MessageDocument
           if (payload.roomId !== roomId) return
           this.onMessageDocArrived(payload)
@@ -134,6 +169,13 @@ class AppwriteSync implements GameSyncProvider {
       this.timers.push(window.setInterval(() => void this.heartbeat(), PRESENCE_INTERVAL_MS))
       this.timers.push(window.setInterval(() => this.emitPresenceIfChanged(), 5_000))
       this.timers.push(window.setInterval(() => void this.checkAbandon(), 5_000))
+
+      // Tab vừa được nhìn lại → touch presence ngay (không chờ interval bị throttle)
+      const onVisible = () => {
+        if (!document.hidden) void this.touchPresence(true)
+      }
+      document.addEventListener('visibilitychange', onVisible)
+      this.unsubscribes.push(() => document.removeEventListener('visibilitychange', onVisible))
     } catch (error) {
       pushToast('Không thể kết nối tới máy chủ game', 'error')
       console.error('[appwrite] init failed:', error)
@@ -229,23 +271,38 @@ class AppwriteSync implements GameSyncProvider {
   // ----- Send actions -----
 
   async sendMove(payload: MovePayload): Promise<MoveAckData> {
-    const doc = this.roomDoc
-    if (!doc || doc.status !== 'playing') return { ok: false, error: 'GAME_NOT_ACTIVE' }
+    const { databases } = getAppwrite()
+    const userId = await this.withUserId()
+    if (!this.roomDoc) return { ok: false, error: 'GAME_NOT_ACTIVE' }
 
-    const userId = await ensureAnonymousSession()
-    const myColor = colorOfUser(userId, doc)
+    // Tự chữa lành: refetch room doc + move log TƯƠI từ Appwrite trước khi
+    // validate — realtime có thể miss event khi tab nền, state cục bộ stale
+    // sẽ khiến nước đi hợp lệ bị từ chối nhầm (NOT_YOUR_TURN).
+    const freshDoc = (await databases.getDocument(
+      DATABASE_ID,
+      ROOMS_COLLECTION_ID,
+      this.roomDoc.$id,
+    )) as unknown as RoomDocument
+    const freshMoves = await fetchRoomMoves(freshDoc)
+    for (const move of freshMoves) this.moveDocs.set(move.$id, move)
+
+    if (freshDoc.status !== 'playing') return { ok: false, error: 'GAME_NOT_ACTIVE' }
+
+    const myColor = colorOfUser(userId, freshDoc)
     if (!myColor) return { ok: false, error: 'NOT_IN_ROOM' }
-    if (doc.turn !== myColor) return { ok: false, error: 'NOT_YOUR_TURN' }
+
+    // Rebuild bàn cờ đã kiểm định từ move log tươi — nguồn sự thật duy nhất
+    const state = this.rebuildLive()
+    if (state.turn !== myColor) return { ok: false, error: 'NOT_YOUR_TURN' }
 
     const legal = findLegalMove(this.liveChess, payload.from as SquareName, payload.to as SquareName, payload.promotion as PieceType | undefined)
     if (!legal) return { ok: false, error: 'INVALID_MOVE' }
 
-    const { databases } = getAppwrite()
     const now = Date.now()
-    let whiteMs = doc.whiteMs
-    let blackMs = doc.blackMs
-    if (doc.timeMinutes > 0 && doc.turnStartedAt > 0) {
-      const elapsed = now - doc.turnStartedAt
+    let whiteMs = freshDoc.whiteMs
+    let blackMs = freshDoc.blackMs
+    if (freshDoc.timeMinutes > 0 && freshDoc.turnStartedAt > 0) {
+      const elapsed = now - freshDoc.turnStartedAt
       if (myColor === 'white') whiteMs = Math.max(0, whiteMs - elapsed)
       else blackMs = Math.max(0, blackMs - elapsed)
     }
@@ -256,8 +313,8 @@ class AppwriteSync implements GameSyncProvider {
       MOVES_COLLECTION_ID,
       ID.unique(),
       {
-        roomId: doc.$id,
-        gameNumber: doc.gameNumber,
+        roomId: freshDoc.$id,
+        gameNumber: freshDoc.gameNumber,
         ply,
         userId,
         color: myColor,
@@ -301,12 +358,12 @@ class AppwriteSync implements GameSyncProvider {
         update.resultReason = derived.reason
       }
     }
-    await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, doc.$id, update)
+    await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, freshDoc.$id, update)
 
-    const updatedDoc: RoomDocument = { ...doc, whiteMs, blackMs, turn: nextTurn, turnStartedAt: now }
-    const state = deriveGameState(this.liveChess, this.historyOf(this.liveChess))
+    const updatedDoc: RoomDocument = { ...freshDoc, whiteMs, blackMs, turn: nextTurn, turnStartedAt: now }
+    const finalState = deriveGameState(this.liveChess, this.historyOf(this.liveChess))
     const clock: ClockInfo | null = clockFromDoc(updatedDoc)
-    return { ok: true, move: moveRecord, state, clock }
+    return { ok: true, move: moveRecord, state: finalState, clock }
   }
 
   async sendResign(): Promise<SimpleAckData> {
@@ -456,8 +513,10 @@ class AppwriteSync implements GameSyncProvider {
     const doc = this.roomDoc
     if (!doc) return deriveGameState(this.liveChess, [])
     const moves = [...this.moveDocs.values()]
-    // replay đầy đủ để có moveHistory đã kiểm định
-    const sorted = [...moves].sort((a, b) => a.ply - b.ply)
+    // Tất định: ply tăng dần, trùng ply thì document tạo trước thắng
+    const sorted = [...moves].sort(
+      (a, b) => a.ply - b.ply || a.$createdAt.localeCompare(b.$createdAt),
+    )
     const replayGame = new Chess()
     const history: MoveRecord[] = []
     let expectedPly = 1
@@ -525,6 +584,27 @@ class AppwriteSync implements GameSyncProvider {
       await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, doc.$id, { [field]: Date.now() })
     } catch {
       // mạng chập chờn — lần sau thử lại
+    }
+  }
+
+  /**
+   * Touch lastSeen của ghế mình. Gọi từ MỌI realtime callback (throttled):
+   * WebSocket không bị Chrome throttle khi tab nền như setInterval, nên
+   * chỉ cần còn nhận event (kể cả heartbeat của đối thủ) là presence tươi —
+   * người chơi không bị xử thua oan khi tab nền.
+   */
+  private async touchPresence(force = false): Promise<void> {
+    const doc = this.roomDoc
+    if (!doc || doc.status !== 'playing') return
+    if (!force && Date.now() - this.lastPresenceTouch < PRESENCE_TOUCH_THROTTLE_MS) return
+    this.lastPresenceTouch = Date.now()
+    const userId = await this.withUserId()
+    const field = userId === doc.whitePlayerId ? 'whiteLastSeenAt' : 'blackLastSeenAt'
+    try {
+      const { databases } = getAppwrite()
+      await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, doc.$id, { [field]: Date.now() })
+    } catch {
+      // bỏ qua — heartbeat định kỳ sẽ thử lại
     }
   }
 
