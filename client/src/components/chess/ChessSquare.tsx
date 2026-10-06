@@ -1,4 +1,4 @@
-import type { CSSProperties, DragEvent } from 'react'
+import type { CSSProperties } from 'react'
 import type { PieceOnSquare, SquareName } from '../../types/chess'
 import type { PieceSetId } from '../../constants/pieceSets'
 import { isLightSquare } from '../../chess/chessUtils'
@@ -13,23 +13,15 @@ interface ChessSquareProps {
   isLegalTarget: boolean
   isLastMove: boolean
   isCheck: boolean
-  /** Nước đi mới đến ô này: quân trượt từ vị trí % tương đối (x/y) */
   slideFrom?: { x: number; y: number }
   /** Nước cuối là nước ăn quân → hiệu ứng ring tại ô đích */
   captureKey?: string
   /** Rê chuột vào quân cờ trên ô này (chỉ gọi khi ô có quân và ô đang tương tác) */
   onPieceHover?: () => void
-  /** Kéo quân khỏi ô này (chỉ khi ô có quân kéo được) */
-  onDragStart?: () => void
-  /** Thả quân vào ô này (chỉ gọi khi ô là đích hợp lệ) */
-  onDrop?: () => void
-  /** Ô này có thể kéo quân không */
-  draggable: boolean
   /** Nhãn tọa độ hiển thị trong ô (hàng dọc bên trái / hàng ngang dưới) */
   rankLabel?: string | null
   fileLabel?: string | null
   interactive: boolean
-  onSquareClick: (square: SquareName) => void
 }
 
 /** Một ô trên bàn cờ: nền, quân cờ, tọa độ, các highlight và xử lý click.
@@ -45,13 +37,9 @@ export function ChessSquare({
   slideFrom,
   captureKey,
   onPieceHover,
-  onDragStart,
-  onDrop,
-  draggable,
   rankLabel,
   fileLabel,
   interactive,
-  onSquareClick,
 }: ChessSquareProps) {
   const light = isLightSquare(square)
   const squareClass = light ? 'bg-[var(--sq-light)]' : 'bg-[var(--sq-dark)]'
@@ -65,22 +53,8 @@ export function ChessSquare({
       type="button"
       data-square={square}
       aria-label={`${square}${piece ? ` ${piece.color} ${piece.type}` : ' empty'}`}
-      onClick={() => onSquareClick(square)}
       onMouseEnter={() => {
         if (piece && interactive) onPieceHover?.()
-      }}
-      draggable={draggable && !!piece}
-      onDragStart={(event: DragEvent<HTMLButtonElement>) => {
-        event.dataTransfer.setData('text/plain', square)
-        event.dataTransfer.effectAllowed = 'move'
-        onDragStart?.()
-      }}
-      onDragOver={(event: DragEvent<HTMLButtonElement>) => {
-        if (isLegalTarget) event.preventDefault()
-      }}
-      onDrop={(event: DragEvent<HTMLButtonElement>) => {
-        event.preventDefault()
-        if (isLegalTarget) onDrop?.()
       }}
       className={`group relative flex items-center justify-center ${squareClass} focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${
         interactive && piece ? 'square-interactive' : ''

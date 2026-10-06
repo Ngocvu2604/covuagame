@@ -125,6 +125,21 @@ html.display-light .app-chrome-muted {
   animation: piece-shake 240ms ease-in-out 2;
 }
 
+/* Quân đang kéo rung/lung lay nhẹ (transform chỉ định trên wrapper ghost) */
+@keyframes drag-wobble {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-2.5deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(2.5deg);
+  }
+}
+
+.drag-wobble {
+  animation: drag-wobble 260ms ease-in-out infinite;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

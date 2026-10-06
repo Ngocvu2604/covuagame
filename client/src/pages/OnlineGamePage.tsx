@@ -151,8 +151,8 @@ export function OnlineGamePage() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
         <GameHeader title={`Chơi Online · ${room.code}`} onOpenSettings={() => setSettingsOpen(true)} />
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,560px)_20rem] lg:justify-center">
-          <div className="mx-auto flex w-full max-w-[560px] flex-col gap-2">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,640px)_20rem] lg:justify-center">
+          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-2">
             <PlayerPanel
               name={opponentInfo?.name ?? 'Đối thủ'}
               color={opponentColor}
@@ -194,7 +194,7 @@ export function OnlineGamePage() {
             />
           </div>
 
-          <aside className="mx-auto flex w-full max-w-[560px] flex-col gap-3 lg:mx-0 lg:w-full">
+          <aside className="mx-auto flex w-full max-w-[640px] flex-col gap-3 lg:mx-0 lg:w-full">
             <MoveHistory moves={gameState?.moveHistory ?? []} />
 
             <section

@@ -1,16 +1,15 @@
 import type { ReactNode } from 'react'
-import type { DisplayMode, Language, MoveMode } from '../../types/chess'
-import type { DifficultyId } from '../../constants/difficulty'
+import type { Language } from '../../types/chess'
 import { BOARD_THEME_LIST } from '../../constants/chess'
 import { DIFFICULTY_OPTIONS } from '../../constants/difficulty'
 import { PIECE_SET_LIST } from '../../constants/pieceSets'
 import { useSettingsStore } from '../../state/settingsStore'
 import { useT } from '../../i18n/translations'
-import { ChessPiece } from '../chess/ChessPiece'
 
 /**
  * Nội dung cài đặt dùng chung cho SettingsPage và SettingsDrawer.
- * Bố cục: Ngôn ngữ → Appearance (bàn cờ, quân cờ, hiển thị) → Audio → Gameplay.
+ * Bố cục: Ngôn ngữ → Appearance (Bàn cờ / Bộ quân / Hiển thị) → Âm thanh → Lượt đi.
+ * Mục dạng danh sách chọn (select): bàn cờ, bộ quân, cách di chuyển, độ khó.
  * Mọi thay đổi áp dụng NGAY LẬP TỨC và tự lưu vào localStorage qua persist.
  */
 
@@ -55,6 +54,41 @@ function Toggle({
           }`}
         />
       </button>
+    </div>
+  )
+}
+
+interface SelectOption<T extends string> {
+  value: T
+  label: string
+}
+
+function SelectField<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: T
+  onChange: (value: T) => void
+  options: SelectOption<T>[]
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <p className="min-w-0 text-sm text-slate-200">{label}</p>
+      <select
+        value={value}
+        aria-label={label}
+        onChange={(event) => onChange(event.target.value as T)}
+        className="shrink-0 rounded-lg border border-white/10 bg-slate-800 px-2.5 py-1.5 text-sm text-slate-200 outline-none transition focus:border-emerald-500"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </div>
   )
 }
@@ -111,59 +145,29 @@ export function SettingsContent() {
       </Section>
 
       <Section title={t('settings.appearance')}>
-        {/* Bàn cờ */}
-        <div>
-          <p className="mb-2 text-sm text-slate-200">{t('settings.boardTheme')}</p>
-          <div className="grid grid-cols-4 gap-2">
-            {BOARD_THEME_LIST.map((theme) => (
-              <button
-                key={theme.id}
-                type="button"
-                aria-pressed={settings.boardTheme === theme.id}
-                onClick={() => settings.setBoardTheme(theme.id)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2 transition ${
-                  settings.boardTheme === theme.id
-                    ? 'border-emerald-500 bg-emerald-600/15'
-                    : 'border-white/10 bg-slate-800/60 hover:bg-slate-800'
-                }`}
-              >
-                <span aria-hidden className="flex overflow-hidden rounded-md ring-1 ring-white/10">
-                  <span style={{ backgroundColor: theme.light }} className="h-5 w-5" />
-                  <span style={{ backgroundColor: theme.dark }} className="h-5 w-5" />
-                </span>
-                <span className="text-[11px] leading-none text-slate-300">{theme.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Quân cờ */}
-        <div>
-          <p className="mb-2 text-sm text-slate-200">{t('settings.pieceSet')}</p>
-          <div className="grid grid-cols-4 gap-2">
-            {PIECE_SET_LIST.map((set) => (
-              <button
-                key={set.id}
-                type="button"
-                aria-pressed={settings.pieceSet === set.id}
-                onClick={() => settings.setPieceSet(set.id)}
-                className={`flex flex-col items-center gap-1 rounded-xl border px-1.5 py-2 transition ${
-                  settings.pieceSet === set.id
-                    ? 'border-emerald-500 bg-emerald-600/15'
-                    : 'border-white/10 bg-slate-800/60 hover:bg-slate-800'
-                }`}
-              >
-                <span className="flex items-center">
-                  <ChessPiece type="knight" color="white" pieceSet={set.id} className="text-xl" />
-                  <ChessPiece type="knight" color="black" pieceSet={set.id} className="-ml-1.5 text-xl" />
-                </span>
-                <span className="text-[11px] leading-none text-slate-300">{set.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <Group>
+          <SelectField
+            label={t('settings.boardTheme')}
+            value={settings.boardTheme}
+            onChange={settings.setBoardTheme}
+            options={BOARD_THEME_LIST.map((theme) => ({ value: theme.id, label: theme.label }))}
+          />
+          <SelectField
+            label={t('settings.pieceSet')}
+            value={settings.pieceSet}
+            onChange={settings.setPieceSet}
+            options={PIECE_SET_LIST.map((set) => ({ value: set.id, label: set.label }))}
+          />
+          <SelectField
+            label={t('settings.darkMode')}
+            value={settings.displayMode}
+            onChange={settings.setDisplayMode}
+            options={[
+              { value: 'dark', label: t('settings.dark') },
+              { value: 'dim', label: t('settings.dim') },
+              { value: 'light', label: t('settings.light') },
+            ]}
+          />
           <Toggle
             label={t('settings.coordinates')}
             checked={settings.showCoordinates}
@@ -175,20 +179,6 @@ export function SettingsContent() {
             onChange={settings.setAnimationsEnabled}
           />
         </Group>
-
-        <div>
-          <p className="mb-2 text-sm text-slate-200">{t('settings.darkMode')}</p>
-          <Segmented<DisplayMode>
-            ariaLabel={t('settings.darkMode')}
-            value={settings.displayMode}
-            onChange={settings.setDisplayMode}
-            options={[
-              { value: 'dark', label: t('settings.dark') },
-              { value: 'dim', label: t('settings.dim') },
-              { value: 'light', label: t('settings.light') },
-            ]}
-          />
-        </div>
       </Section>
 
       <Section title={t('settings.audio')}>
@@ -222,10 +212,9 @@ export function SettingsContent() {
       </Section>
 
       <Section title={t('settings.gameplay')}>
-        <div>
-          <p className="mb-2 text-sm text-slate-200">{t('settings.moveMode')}</p>
-          <Segmented<MoveMode>
-            ariaLabel={t('settings.moveMode')}
+        <Group>
+          <SelectField
+            label={t('settings.moveMode')}
             value={settings.moveMode}
             onChange={settings.setMoveMode}
             options={[
@@ -234,10 +223,6 @@ export function SettingsContent() {
               { value: 'both', label: t('settings.moveBoth') },
             ]}
           />
-          <p className="mt-1.5 text-xs text-slate-500">{t('settings.moveModeDesc')}</p>
-        </div>
-
-        <Group>
           <Toggle
             label={t('settings.showLegalMoves')}
             checked={settings.showLegalMoves}
@@ -249,19 +234,15 @@ export function SettingsContent() {
             onChange={settings.setShowLastMove}
           />
         </Group>
-
-        <div>
-          <p className="mb-2 text-sm text-slate-200">{t('settings.defaultDifficulty')}</p>
-          <Segmented<DifficultyId>
-            ariaLabel={t('settings.defaultDifficulty')}
-            value={settings.defaultDifficulty}
-            onChange={settings.setDefaultDifficulty}
-            options={DIFFICULTY_OPTIONS.map((option) => ({
-              value: option.id,
-              label: `${option.emoji} ${t(option.nameKey)}`,
-            }))}
-          />
-        </div>
+        <SelectField
+          label={t('settings.defaultDifficulty')}
+          value={settings.defaultDifficulty}
+          onChange={settings.setDefaultDifficulty}
+          options={DIFFICULTY_OPTIONS.map((option) => ({
+            value: option.id,
+            label: `${option.emoji} ${t(option.nameKey)}`,
+          }))}
+        />
       </Section>
     </div>
   )
