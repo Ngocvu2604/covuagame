@@ -26,6 +26,8 @@ export const SOCKET_EVENTS = {
   GAME_REMATCH_OFFER: 'game:rematch:offer',
   GAME_REMATCH_ACCEPT: 'game:rematch:accept',
   GAME_REMATCH_OFFERED: 'game:rematch:offered',
+  GAME_REMATCH_DECLINE: 'game:rematch:decline',
+  GAME_REMATCH_DECLINED: 'game:rematch:declined',
   // Chat
   CHAT_SEND: 'chat:send',
   CHAT_MESSAGE: 'chat:message',

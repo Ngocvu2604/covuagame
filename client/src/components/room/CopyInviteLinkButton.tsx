@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../common/Button'
 import { pushToast } from '../../state/uiStore'
+import { useT } from '../../i18n/translations'
 
 interface CopyInviteLinkButtonProps {
   code: string
@@ -8,6 +9,7 @@ interface CopyInviteLinkButtonProps {
 
 /** Copy link mời vào phòng — domain lấy từ browser location, không hard-code */
 export function CopyInviteLinkButton({ code }: CopyInviteLinkButtonProps) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
 
   const buildLink = (): string => {
@@ -28,13 +30,13 @@ export function CopyInviteLinkButton({ code }: CopyInviteLinkButtonProps) {
       textarea.remove()
     }
     setCopied(true)
-    pushToast('Đã copy link mời — gửi cho đối thủ của bạn', 'success')
+    pushToast(t('wait.toastLink'), 'success')
     setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <Button variant="primary" onClick={() => void copy()}>
-      {copied ? '✓ Đã copy link mời!' : '🔗 Copy invite link'}
+      {copied ? t('wait.copiedLink') : t('wait.copyLink')}
     </Button>
   )
 }

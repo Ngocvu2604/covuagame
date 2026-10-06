@@ -128,6 +128,20 @@ export class GameManager {
     return this.finish(managed, { winner: opposite(color), reason: 'resignation' })
   }
 
+  /** Rời trận qua hộp thoại xác nhận — phân biệt với đầu hàng trực tiếp */
+  leave(roomCode: string, color: PlayerColor): ActionOutcome {
+    const managed = this.games.get(roomCode)
+    if (!managed || managed.finished) return { ok: false, error: 'GAME_NOT_ACTIVE' }
+    return this.finish(managed, { winner: opposite(color), reason: 'left' })
+  }
+
+  /** Mất kết nối quá lâu (grace timeout) — phân biệt với đầu hàng */
+  abandon(roomCode: string, color: PlayerColor): ActionOutcome {
+    const managed = this.games.get(roomCode)
+    if (!managed || managed.finished) return { ok: false, error: 'GAME_NOT_ACTIVE' }
+    return this.finish(managed, { winner: opposite(color), reason: 'abandoned' })
+  }
+
   agreeDraw(roomCode: string): ActionOutcome {
     const managed = this.games.get(roomCode)
     if (!managed || managed.finished) return { ok: false, error: 'GAME_NOT_ACTIVE' }

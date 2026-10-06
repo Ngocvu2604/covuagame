@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, DragEvent } from 'react'
 import type { PieceOnSquare, SquareName } from '../../types/chess'
 import type { PieceSetId } from '../../constants/pieceSets'
 import { isLightSquare } from '../../chess/chessUtils'
@@ -19,6 +19,12 @@ interface ChessSquareProps {
   captureKey?: string
   /** Rê chuột vào quân cờ trên ô này (chỉ gọi khi ô có quân và ô đang tương tác) */
   onPieceHover?: () => void
+  /** Kéo quân khỏi ô này (chỉ khi ô có quân kéo được) */
+  onDragStart?: () => void
+  /** Thả quân vào ô này (chỉ gọi khi ô là đích hợp lệ) */
+  onDrop?: () => void
+  /** Ô này có thể kéo quân không */
+  draggable: boolean
   /** Nhãn tọa độ hiển thị trong ô (hàng dọc bên trái / hàng ngang dưới) */
   rankLabel?: string | null
   fileLabel?: string | null
@@ -39,6 +45,9 @@ export function ChessSquare({
   slideFrom,
   captureKey,
   onPieceHover,
+  onDragStart,
+  onDrop,
+  draggable,
   rankLabel,
   fileLabel,
   interactive,
@@ -59,6 +68,19 @@ export function ChessSquare({
       onClick={() => onSquareClick(square)}
       onMouseEnter={() => {
         if (piece && interactive) onPieceHover?.()
+      }}
+      draggable={draggable && !!piece}
+      onDragStart={(event: DragEvent<HTMLButtonElement>) => {
+        event.dataTransfer.setData('text/plain', square)
+        event.dataTransfer.effectAllowed = 'move'
+        onDragStart?.()
+      }}
+      onDragOver={(event: DragEvent<HTMLButtonElement>) => {
+        if (isLegalTarget) event.preventDefault()
+      }}
+      onDrop={(event: DragEvent<HTMLButtonElement>) => {
+        event.preventDefault()
+        if (isLegalTarget) onDrop?.()
       }}
       className={`group relative flex items-center justify-center ${squareClass} focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${
         interactive && piece ? 'square-interactive' : ''

@@ -173,7 +173,7 @@ export async function leaveAppwriteRoom(roomId: string): Promise<void> {
     await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, roomId, {
       status: 'finished',
       winner: myColor === 'white' ? 'black' : 'white',
-      resultReason: 'resignation',
+      resultReason: 'left',
       turnStartedAt: 0,
       [myColor === 'white' ? 'whiteLastSeenAt' : 'blackLastSeenAt']: Date.now(),
     })

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useT } from '../i18n/translations'
 import { ChessBoard } from '../components/chess/ChessBoard'
 import { PromotionDialog } from '../components/chess/PromotionDialog'
 import { PlayerPanel } from '../components/player/PlayerPanel'
@@ -34,6 +35,7 @@ interface OfflineSetup {
 /** Trang chơi với máy: màn hình tạo trận (độ khó, màu, thời gian) rồi vào ván đấu */
 export function OfflineGamePage() {
   const navigate = useNavigate()
+  const t = useT()
   const defaultDifficulty = useSettingsStore((s) => s.defaultDifficulty)
   const playerName = usePlayerStore((s) => s.name)
   const endGame = useGameStore((s) => s.endGame)
@@ -53,6 +55,7 @@ export function OfflineGamePage() {
     legalTargets,
     pendingPromotion,
     handleSquareClick,
+    tryMoveTo,
     completePromotion,
     cancelPromotion,
     resetGame,
@@ -81,7 +84,8 @@ export function OfflineGamePage() {
     onFlag: handleFlag,
   })
 
-  const aiName = `Máy · ${DIFFICULTY_OPTIONS.find((o) => o.id === setup.difficulty)?.name ?? ''}`
+  const difficultyOption = DIFFICULTY_OPTIONS.find((o) => o.id === setup.difficulty)
+  const aiName = `${t('game.aiName')} · ${difficultyOption ? t(difficultyOption.nameKey) : ''}`
 
   const choiceButtonClass = (active: boolean) =>
     `rounded-xl border px-2 py-2 text-xs font-medium transition sm:px-3 sm:text-sm ${
@@ -120,13 +124,13 @@ export function OfflineGamePage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
         <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
-          <h2 className="text-center text-xl font-bold">Tạo trận đấu</h2>
+          <h2 className="text-center text-xl font-bold">{t('setup.title')}</h2>
           <p className="mt-1 text-center text-sm text-slate-400">
-            Chơi với máy — hoạt động hoàn toàn offline
+            {t('setup.subtitle')}
           </p>
 
-          <section aria-label="Độ khó" className="mt-6">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Độ khó</p>
+          <section aria-label={t('setup.difficulty')} className="mt-6">
+            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.difficulty')}</p>
             <div className="flex flex-col gap-2">
               {DIFFICULTY_OPTIONS.map((option) => (
                 <button
@@ -143,24 +147,24 @@ export function OfflineGamePage() {
                     {option.emoji}
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold">{option.name}</span>
-                    <span className="block text-xs text-slate-400">{option.description}</span>
+                    <span className="block text-sm font-semibold">{t(option.nameKey)}</span>
+                    <span className="block text-xs text-slate-400">{t(option.descKey)}</span>
                   </span>
                 </button>
               ))}
             </div>
           </section>
 
-          <section aria-label="Quân của bạn" className="mt-5">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Quân của bạn</p>
+          <section aria-label={t('setup.colorSection')} className="mt-5">
+            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.colorSection')}</p>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ['white', '⚪', 'Trắng'],
-                  ['black', '⚫', 'Đen'],
-                  ['random', '🎲', 'Ngẫu nhiên'],
+                  ['white', '⚪', 'setup.colorWhite'],
+                  ['black', '⚫', 'setup.colorBlack'],
+                  ['random', '🎲', 'setup.colorRandom'],
                 ] as const
-              ).map(([value, emoji, label]) => (
+              ).map(([value, emoji, labelKey]) => (
                 <button
                   key={value}
                   type="button"
@@ -168,14 +172,14 @@ export function OfflineGamePage() {
                   className={`flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 ${choiceButtonClass(setup.colorChoice === value)}`}
                 >
                   <span aria-hidden>{emoji}</span>
-                  <span>{label}</span>
+                  <span>{t(labelKey)}</span>
                 </button>
               ))}
             </div>
           </section>
 
-          <section aria-label="Thời gian" className="mt-5">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Thời gian (phút)</p>
+          <section aria-label={t('setup.timeSection')} className="mt-5">
+            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.timeSection')}</p>
             <div className="grid grid-cols-5 gap-2">
               {TIME_CONTROL_OPTIONS.map((option) => (
                 <button
@@ -192,10 +196,10 @@ export function OfflineGamePage() {
 
           <div className="mt-6 flex flex-col gap-2">
             <Button variant="primary" size="lg" fullWidth onClick={startGame}>
-              Bắt đầu trận đấu
+              {t('setup.start')}
             </Button>
             <Button variant="ghost" fullWidth onClick={() => navigate('/')}>
-              ← Về trang chủ
+              {t('setup.back')}
             </Button>
           </div>
         </div>
@@ -220,7 +224,7 @@ export function OfflineGamePage() {
   return (
     <main className="min-h-screen px-4 py-6 text-slate-100">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <GameHeader title="Chơi với máy" onOpenSettings={() => setSettingsOpen(true)} />
+        <GameHeader title={t('offline.headerTitle')} onOpenSettings={() => setSettingsOpen(true)} />
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,560px)_20rem] lg:justify-center">
           <div className="mx-auto flex w-full max-w-[560px] flex-col gap-2">
@@ -229,7 +233,11 @@ export function OfflineGamePage() {
               color={aiColor}
               isActive={!state.result && state.turn === aiColor}
               statusLabel={
-                state.turn === aiColor ? (isThinking ? '🤖 Đang suy nghĩ…' : 'Đến lượt') : 'Đang chờ'
+                state.turn === aiColor
+                  ? isThinking
+                    ? t('game.thinking')
+                    : t('game.yourTurn')
+                  : t('game.waiting')
               }
               timeMs={clockFor(aiColor)}
             />
@@ -243,6 +251,8 @@ export function OfflineGamePage() {
               lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={state.checkSquare}
               onPieceHover={() => soundService.playHover()}
+              onDrop={tryMoveTo}
+              dragColor={state.result === null ? playerColor : null}
               disabled={state.result !== null || state.turn === aiColor}
               onSquareClick={handleSquareClick}
             />
@@ -251,7 +261,7 @@ export function OfflineGamePage() {
               name={playerName || 'Bạn'}
               color={playerColor}
               isActive={!state.result && state.turn === playerColor}
-              statusLabel={state.turn === playerColor ? 'Đến lượt' : 'Đang chờ'}
+              statusLabel={state.turn === playerColor ? t('game.yourTurn') : t('game.waiting')}
               timeMs={clockFor(playerColor)}
             />
           </div>

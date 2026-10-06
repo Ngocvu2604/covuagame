@@ -91,6 +91,7 @@ export interface GameSyncHandlers {
   onDrawOffered: (payload: OfferedPayload) => void
   onDrawDeclined: (payload: OfferedPayload) => void
   onRematchOffered: (payload: OfferedPayload) => void
+  onRematchDeclined: (payload: OfferedPayload) => void
   onChatMessage: (payload: ChatMessage) => void
 }
 
@@ -103,5 +104,6 @@ export interface GameSyncProvider {
   sendDrawDecline: () => Promise<SimpleAckData>
   sendRematchOffer: () => Promise<SimpleAckData>
   sendRematchAccept: () => Promise<SimpleAckData>
+  sendRematchDecline: () => Promise<SimpleAckData>
   sendChat: (text: string) => Promise<SimpleAckData>
 }

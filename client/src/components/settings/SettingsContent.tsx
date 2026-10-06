@@ -1,14 +1,16 @@
 import type { ReactNode } from 'react'
-import type { DisplayMode } from '../../types/chess'
+import type { DisplayMode, Language, MoveMode } from '../../types/chess'
 import type { DifficultyId } from '../../constants/difficulty'
 import { BOARD_THEME_LIST } from '../../constants/chess'
 import { DIFFICULTY_OPTIONS } from '../../constants/difficulty'
 import { PIECE_SET_LIST } from '../../constants/pieceSets'
 import { useSettingsStore } from '../../state/settingsStore'
+import { useT } from '../../i18n/translations'
 import { ChessPiece } from '../chess/ChessPiece'
 
 /**
  * Nội dung cài đặt dùng chung cho SettingsPage và SettingsDrawer.
+ * Bố cục: Ngôn ngữ → Appearance (bàn cờ, quân cờ, hiển thị) → Audio → Gameplay.
  * Mọi thay đổi áp dụng NGAY LẬP TỨC và tự lưu vào localStorage qua persist.
  */
 
@@ -21,23 +23,22 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
+function Group({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">{children}</div>
+}
+
 function Toggle({
   label,
-  description,
   checked,
   onChange,
 }: {
   label: string
-  description?: string
   checked: boolean
   onChange: (value: boolean) => void
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm text-slate-200">{label}</p>
-        {description && <p className="text-xs text-slate-500">{description}</p>}
-      </div>
+    <div className="flex items-center justify-between gap-3 py-1.5">
+      <p className="min-w-0 text-sm text-slate-200">{label}</p>
       <button
         type="button"
         role="switch"
@@ -91,13 +92,28 @@ function Segmented<T extends string>({
 }
 
 export function SettingsContent() {
+  const t = useT()
   const settings = useSettingsStore()
 
   return (
-    <div className="flex flex-col gap-6">
-      <Section title="Appearance">
+    <div className="flex flex-col gap-5">
+      {/* NGÔN NGỮ — đầu tiên để người mới tìm được */}
+      <Section title={t('settings.language')}>
+        <Segmented<Language>
+          ariaLabel={t('settings.language')}
+          value={settings.language}
+          onChange={settings.setLanguage}
+          options={[
+            { value: 'vi', label: t('settings.langVi') },
+            { value: 'en', label: t('settings.langEn') },
+          ]}
+        />
+      </Section>
+
+      <Section title={t('settings.appearance')}>
+        {/* Bàn cờ */}
         <div>
-          <p className="mb-2 text-sm text-slate-200">Board Theme</p>
+          <p className="mb-2 text-sm text-slate-200">{t('settings.boardTheme')}</p>
           <div className="grid grid-cols-4 gap-2">
             {BOARD_THEME_LIST.map((theme) => (
               <button
@@ -121,8 +137,9 @@ export function SettingsContent() {
           </div>
         </div>
 
+        {/* Quân cờ */}
         <div>
-          <p className="mb-2 text-sm text-slate-200">Piece Set</p>
+          <p className="mb-2 text-sm text-slate-200">{t('settings.pieceSet')}</p>
           <div className="grid grid-cols-4 gap-2">
             {PIECE_SET_LIST.map((set) => (
               <button
@@ -146,50 +163,50 @@ export function SettingsContent() {
           </div>
         </div>
 
-        <div>
-          <p className="mb-2 text-sm text-slate-200">Dark Mode</p>
-          <Segmented<DisplayMode>
-            ariaLabel="Chế độ hiển thị"
-            value={settings.displayMode}
-            onChange={settings.setDisplayMode}
-            options={[
-              { value: 'dark', label: '🌙 Tối' },
-              { value: 'dim', label: '🌗 Dịu' },
-              { value: 'light', label: '☀️ Sáng' },
-            ]}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
+        <Group>
           <Toggle
-            label="Coordinates"
+            label={t('settings.coordinates')}
             checked={settings.showCoordinates}
             onChange={settings.setShowCoordinates}
           />
           <Toggle
-            label="Animation"
+            label={t('settings.animation')}
             checked={settings.animationsEnabled}
             onChange={settings.setAnimationsEnabled}
+          />
+        </Group>
+
+        <div>
+          <p className="mb-2 text-sm text-slate-200">{t('settings.darkMode')}</p>
+          <Segmented<DisplayMode>
+            ariaLabel={t('settings.darkMode')}
+            value={settings.displayMode}
+            onChange={settings.setDisplayMode}
+            options={[
+              { value: 'dark', label: t('settings.dark') },
+              { value: 'dim', label: t('settings.dim') },
+              { value: 'light', label: t('settings.light') },
+            ]}
           />
         </div>
       </Section>
 
-      <Section title="Audio">
-        <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
+      <Section title={t('settings.audio')}>
+        <Group>
           <Toggle
-            label="Background Music"
+            label={t('settings.music')}
             checked={settings.musicEnabled}
             onChange={settings.setMusicEnabled}
           />
           <div className="flex items-center gap-3 py-1">
-            <span className="w-14 shrink-0 text-sm text-slate-200">Volume</span>
+            <span className="w-14 shrink-0 text-sm text-slate-200">{t('settings.volume')}</span>
             <input
               type="range"
               min={0}
               max={100}
               value={Math.round(settings.musicVolume * 100)}
               onChange={(event) => settings.setMusicVolume(Number(event.target.value) / 100)}
-              aria-label="Âm lượng nhạc nền"
+              aria-label={t('settings.volume')}
               className="h-1.5 w-full cursor-pointer accent-emerald-500"
             />
             <span className="w-9 shrink-0 text-right text-xs tabular-nums text-slate-400">
@@ -197,35 +214,51 @@ export function SettingsContent() {
             </span>
           </div>
           <Toggle
-            label="Sound Effects"
+            label={t('settings.sfx')}
             checked={settings.soundEnabled}
             onChange={settings.setSoundEnabled}
           />
-        </div>
+        </Group>
       </Section>
 
-      <Section title="Gameplay">
-        <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">
+      <Section title={t('settings.gameplay')}>
+        <div>
+          <p className="mb-2 text-sm text-slate-200">{t('settings.moveMode')}</p>
+          <Segmented<MoveMode>
+            ariaLabel={t('settings.moveMode')}
+            value={settings.moveMode}
+            onChange={settings.setMoveMode}
+            options={[
+              { value: 'click', label: t('settings.moveClick') },
+              { value: 'drag', label: t('settings.moveDrag') },
+              { value: 'both', label: t('settings.moveBoth') },
+            ]}
+          />
+          <p className="mt-1.5 text-xs text-slate-500">{t('settings.moveModeDesc')}</p>
+        </div>
+
+        <Group>
           <Toggle
-            label="Show Legal Moves"
+            label={t('settings.showLegalMoves')}
             checked={settings.showLegalMoves}
             onChange={settings.setShowLegalMoves}
           />
           <Toggle
-            label="Show Last Move"
+            label={t('settings.showLastMove')}
             checked={settings.showLastMove}
             onChange={settings.setShowLastMove}
           />
-        </div>
+        </Group>
+
         <div>
-          <p className="mb-2 text-sm text-slate-200">Độ khó mặc định (chơi với máy)</p>
+          <p className="mb-2 text-sm text-slate-200">{t('settings.defaultDifficulty')}</p>
           <Segmented<DifficultyId>
-            ariaLabel="Độ khó mặc định"
+            ariaLabel={t('settings.defaultDifficulty')}
             value={settings.defaultDifficulty}
             onChange={settings.setDefaultDifficulty}
             options={DIFFICULTY_OPTIONS.map((option) => ({
               value: option.id,
-              label: `${option.emoji} ${option.name}`,
+              label: `${option.emoji} ${t(option.nameKey)}`,
             }))}
           />
         </div>

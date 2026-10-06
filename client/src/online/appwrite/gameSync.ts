@@ -21,6 +21,7 @@ import { toPieceType, toPlayerColor } from '../../chess/chessUtils'
 import { usePlayerStore } from '../../state/playerStore'
 import { useRoomStore } from '../../state/roomStore'
 import { pushToast } from '../../state/uiStore'
+import { getT } from '../../i18n/translations'
 
 /**
  * GameSyncProvider chạy trên Appwrite Realtime + Database.
@@ -36,8 +37,8 @@ import { pushToast } from '../../state/uiStore'
  */
 
 const PRESENCE_INTERVAL_MS = 10_000
-/** 5 phút — đủ rộng cho tab nền bị throttle timer (presence có thêm đường realtime) */
-const ABANDON_AFTER_MS = 300_000
+/** 30 giây grace — đối thủ mất kết nối quá hạn thì xử thắng (mục 18) */
+const ABANDON_AFTER_MS = 30_000
 /** Khoảng nghỉ tối thiểu giữa 2 lần touch presence qua realtime events */
 const PRESENCE_TOUCH_THROTTLE_MS = 8_000
 
@@ -177,7 +178,7 @@ class AppwriteSync implements GameSyncProvider {
       document.addEventListener('visibilitychange', onVisible)
       this.unsubscribes.push(() => document.removeEventListener('visibilitychange', onVisible))
     } catch (error) {
-      pushToast('Không thể kết nối tới máy chủ game', 'error')
+      pushToast(getT()('game.initServerFail'), 'error')
       console.error('[appwrite] init failed:', error)
     }
   }
@@ -232,6 +233,9 @@ class AppwriteSync implements GameSyncProvider {
       if (doc.rematchOfferedBy) {
         const from = colorOfUser(doc.rematchOfferedBy, doc)
         if (from) this.handlers?.onRematchOffered({ from })
+      } else if (prev?.rematchOfferedBy) {
+        // Lời mời bị từ chối (xóa sau khi có) — người gửi thấy trạng thái "Bị từ chối"
+        this.handlers?.onRematchDeclined({ from: 'white' })
       }
       this.lastEmittedRematchOffer = doc.rematchOfferedBy
     }
@@ -413,6 +417,16 @@ class AppwriteSync implements GameSyncProvider {
       turn: 'white',
       turnStartedAt: Date.now(),
     })
+    return { ok: true }
+  }
+
+  async sendRematchDecline(): Promise<SimpleAckData> {
+    const doc = this.roomDoc
+    const userId = await ensureAnonymousSession()
+    if (!doc || doc.status === 'playing') return { ok: false, error: 'NO_OFFER' }
+    if (!doc.rematchOfferedBy || doc.rematchOfferedBy === userId) return { ok: false, error: 'NO_OFFER' }
+    const { databases } = getAppwrite()
+    await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, doc.$id, { rematchOfferedBy: '' })
     return { ok: true }
   }
 
@@ -636,7 +650,7 @@ class AppwriteSync implements GameSyncProvider {
         resultReason: 'abandoned',
         turnStartedAt: 0,
       })
-      pushToast('Đối thủ rời trận quá lâu — bạn thắng', 'info')
+      pushToast(getT()('game.abandonWinToast'), 'info')
     }
   }
 }

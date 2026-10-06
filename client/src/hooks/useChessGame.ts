@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { PieceType, SquareName } from '../types/chess'
 import { useGameStore } from '../state/gameStore'
+import { useSettingsStore } from '../state/settingsStore'
 
 interface PendingPromotion {
   from: SquareName
@@ -19,6 +20,7 @@ export function useChessGame() {
   const isPromotionNeeded = useGameStore((s) => s.isPromotionNeeded)
   const getPieceAt = useGameStore((s) => s.getPieceAt)
   const resetGame = useGameStore((s) => s.resetGame)
+  const moveMode = useSettingsStore((s) => s.moveMode)
 
   const [selectedSquare, setSelectedSquare] = useState<SquareName | null>(null)
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null)
@@ -32,12 +34,15 @@ export function useChessGame() {
     (square: SquareName) => {
       if (state.result || pendingPromotion) return
 
-      // Đang chọn quân và click vào ô đích hợp lệ → đi nước
+      // Đang chọn quân và click vào ô đích hợp lệ → đi nước.
+      // Ở chế độ 'drag' thì click không đi — chỉ kéo-thả mới đi.
       if (selectedSquare && legalTargets.includes(square)) {
-        if (isPromotionNeeded(selectedSquare, square)) {
-          setPendingPromotion({ from: selectedSquare, to: square })
-        } else {
-          makeMove(selectedSquare, square)
+        if (moveMode !== 'drag') {
+          if (isPromotionNeeded(selectedSquare, square)) {
+            setPendingPromotion({ from: selectedSquare, to: square })
+          } else {
+            makeMove(selectedSquare, square)
+          }
         }
         setSelectedSquare(null)
         return
@@ -60,7 +65,26 @@ export function useChessGame() {
       isPromotionNeeded,
       makeMove,
       getPieceAt,
+      moveMode,
     ],
+  )
+
+  /** Kéo-thả: thả quân vào ô đích (đã được chọn sẵn khi dragstart) */
+  const tryMoveTo = useCallback(
+    (target: SquareName) => {
+      if (state.result || pendingPromotion || !selectedSquare) return
+      if (!legalTargets.includes(target)) {
+        setSelectedSquare(null)
+        return
+      }
+      if (isPromotionNeeded(selectedSquare, target)) {
+        setPendingPromotion({ from: selectedSquare, to: target })
+      } else {
+        makeMove(selectedSquare, target)
+      }
+      setSelectedSquare(null)
+    },
+    [state.result, pendingPromotion, selectedSquare, legalTargets, isPromotionNeeded, makeMove],
   )
 
   /** Xác nhận quân phong cấp và hoàn tất nước đi */
@@ -93,6 +117,7 @@ export function useChessGame() {
     legalTargets,
     pendingPromotion,
     handleSquareClick,
+    tryMoveTo,
     completePromotion,
     cancelPromotion,
     resetGame: handleResetGame,

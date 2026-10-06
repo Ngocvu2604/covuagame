@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../common/Button'
 import { pushToast } from '../../state/uiStore'
+import { useT } from '../../i18n/translations'
 
 interface CopyRoomCodeButtonProps {
   code: string
@@ -8,6 +9,7 @@ interface CopyRoomCodeButtonProps {
 
 /** Copy mã phòng vào clipboard với phản hồi "Đã copy" + toast */
 export function CopyRoomCodeButton({ code }: CopyRoomCodeButtonProps) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -23,13 +25,13 @@ export function CopyRoomCodeButton({ code }: CopyRoomCodeButtonProps) {
       textarea.remove()
     }
     setCopied(true)
-    pushToast(`Đã copy mã phòng: ${code}`, 'success')
+    pushToast(t('wait.toastCode', { code }), 'success')
     setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <Button variant="secondary" onClick={() => void copy()}>
-      {copied ? '✓ Đã copy!' : '📋 Copy mã phòng'}
+      {copied ? t('wait.copiedCode') : t('wait.copyCode')}
     </Button>
   )
 }

@@ -1,6 +1,7 @@
 import type { PieceType, PlayerColor } from '../../types/chess'
 import { Modal } from '../common/Modal'
 import { ChessPiece } from './ChessPiece'
+import { useT } from '../../i18n/translations'
 
 const PROMOTION_PIECES: PieceType[] = ['queen', 'rook', 'bishop', 'knight']
 
@@ -13,10 +14,11 @@ interface PromotionDialogProps {
 
 /** Hộp thoại chọn quân phong cấp khi tốt đi tới cuối bàn */
 export function PromotionDialog({ color, onSelect, onCancel }: PromotionDialogProps) {
+  const t = useT()
   return (
     <Modal onClose={onCancel}>
       <h2 className="mb-4 text-center text-sm font-semibold uppercase tracking-widest text-slate-300">
-        Phong cấp
+        {t('promo.title')}
       </h2>
 
       <div className="flex justify-center gap-2">
@@ -39,7 +41,7 @@ export function PromotionDialog({ color, onSelect, onCancel }: PromotionDialogPr
           onClick={onCancel}
           className="text-xs text-slate-400 underline-offset-2 transition hover:text-slate-200 hover:underline"
         >
-          Hủy
+          {t('promo.cancel')}
         </button>
       </div>
     </Modal>

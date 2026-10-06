@@ -1,4 +1,5 @@
 import { Button } from '../common/Button'
+import { useT } from '../../i18n/translations'
 
 interface DrawButtonProps {
   visible: boolean
@@ -12,10 +13,11 @@ interface DrawButtonProps {
 
 /** Nút xin hòa — ẩn khi có lời mời đến (modal đảm nhiệm) */
 export function DrawButton({ visible, canOffer, offerSentByMe, incomingOffer, onOffer }: DrawButtonProps) {
+  const t = useT()
   if (!visible || incomingOffer) return null
   return (
     <Button variant="secondary" fullWidth disabled={!canOffer || offerSentByMe} onClick={onOffer}>
-      {offerSentByMe ? '½ Đã đề nghị hòa — chờ phản hồi…' : '½ Xin hòa'}
+      {offerSentByMe ? t('draw.offered') : t('draw.offer')}
     </Button>
   )
 }

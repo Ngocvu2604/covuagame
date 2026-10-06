@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { BoardThemeId, DisplayMode } from '../types/chess'
+import type { BoardThemeId, DisplayMode, Language, MoveMode } from '../types/chess'
 import type { DifficultyId } from '../constants/difficulty'
 import type { PieceSetId } from '../constants/pieceSets'
 import { DEFAULT_BOARD_THEME, BOARD_THEMES } from '../constants/chess'
@@ -35,6 +35,10 @@ export type SettingsState = {
   showLastMove: boolean
   /** Độ khó được chọn sẵn khi tạo trận với máy */
   defaultDifficulty: DifficultyId
+  /** Ngôn ngữ giao diện */
+  language: Language
+  /** Cách di chuyển quân */
+  moveMode: MoveMode
 }
 
 export type SettingsActions = {
@@ -49,6 +53,8 @@ export type SettingsActions = {
   setShowLegalMoves: (show: boolean) => void
   setShowLastMove: (show: boolean) => void
   setDefaultDifficulty: (difficulty: DifficultyId) => void
+  setLanguage: (language: Language) => void
+  setMoveMode: (mode: MoveMode) => void
 }
 
 export type SettingsStore = SettingsState & SettingsActions
@@ -69,6 +75,8 @@ export const useSettingsStore = create<SettingsStore>()(
       showLegalMoves: true,
       showLastMove: true,
       defaultDifficulty: 'medium',
+      language: 'vi',
+      moveMode: 'both',
 
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setMusicEnabled: (enabled) => set({ musicEnabled: enabled }),
@@ -81,6 +89,8 @@ export const useSettingsStore = create<SettingsStore>()(
       setShowLegalMoves: (showLegalMoves) => set({ showLegalMoves }),
       setShowLastMove: (showLastMove) => set({ showLastMove }),
       setDefaultDifficulty: (difficulty) => set({ defaultDifficulty: difficulty }),
+      setLanguage: (language) => set({ language }),
+      setMoveMode: (moveMode) => set({ moveMode }),
     }),
     {
       name: storageKeys.settings,

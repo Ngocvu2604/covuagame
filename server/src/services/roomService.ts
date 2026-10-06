@@ -143,7 +143,8 @@ export class RoomService {
     if (!player) return
 
     if (room.status === 'playing') {
-      const outcome = this.gameManager.resign(room.code, player.color)
+      // Rời phòng qua xác nhận → lý do 'left' (phân biệt đầu hàng trực tiếp)
+      const outcome = this.gameManager.leave(room.code, player.color)
       if (outcome.ok) this.finishGame(room, outcome.result, outcome.state)
     }
 
@@ -180,9 +181,10 @@ export class RoomService {
         if (!current || current.status !== 'playing') return
         const still = findPlayerBySocket(current, socket.id)
         if (!still || still.connected) return
-        // Quá thời gian chờ không reconnect → xử thua
+        // Quá thời gian chờ không reconnect → xử thua (lý do 'abandoned' —
+        // phân biệt với đầu hàng trực tiếp và rời trận có xác nhận)
         console.log(`[room ${room.code}] grace timer expired → ${player.name} loses`)
-        const outcome = this.gameManager.resign(room.code, player.color)
+        const outcome = this.gameManager.abandon(room.code, player.color)
         if (outcome.ok) this.finishGame(current, outcome.result, outcome.state)
       }, this.config.disconnectGraceMs)
       this.disconnectTimers.set(socket.id, timer)

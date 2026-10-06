@@ -4,6 +4,7 @@ import { SOCKET_EVENTS } from '../constants/socketEvents'
 import { ensureAnonymousSession, isAppwriteConfigured } from './appwrite/client'
 import { createAppwriteRoom, joinAppwriteRoom, leaveAppwriteRoom } from './appwrite/roomService'
 import { useRoomStore } from '../state/roomStore'
+import type { TranslationKey } from '../i18n/translations'
 
 /**
  * Quản lý phòng — dispatcher giống gameSync:
@@ -17,18 +18,23 @@ export interface CreateRoomInput {
   timeMinutes: number | null
 }
 
-export const ERROR_MESSAGES: Record<string, string> = {
-  ROOM_NOT_FOUND: 'Không tìm thấy phòng.',
-  ROOM_FULL: 'Phòng đã đầy.',
-  ROOM_FINISHED: 'Phòng này không còn hoạt động.',
-  INVALID_CODE: 'Mã phòng không hợp lệ.',
-  INVALID_NAME: 'Tên người chơi không hợp lệ.',
-  INVALID_TIME_CONTROL: 'Thời gian không hợp lệ.',
-  ACK_TIMEOUT: 'Máy chủ không phản hồi.',
+const ERROR_MESSAGE_KEYS: Record<string, TranslationKey> = {
+  ROOM_NOT_FOUND: 'lobby.errNotFound',
+  ROOM_FULL: 'lobby.errFull',
+  ROOM_FINISHED: 'lobby.errFinished',
+  INVALID_CODE: 'lobby.errInvalidCode',
+  INVALID_NAME: 'lobby.errInvalidName',
+  INVALID_TIME_CONTROL: 'lobby.errInvalidTime',
+  ACK_TIMEOUT: 'lobby.errAckTimeout',
 }
 
-export function describeRoomError(code?: string): string {
-  return (code && ERROR_MESSAGES[code]) || 'Không thể kết nối máy chủ.'
+/** Map error code → thông báo đã dịch theo ngôn ngữ hiện tại */
+export function describeRoomError(
+  code: string | undefined,
+  t: (key: TranslationKey) => string,
+): string {
+  const key = code ? ERROR_MESSAGE_KEYS[code] : undefined
+  return key ? t(key) : t('lobby.errGeneric')
 }
 
 /** Provider đang hoạt động (dùng để hiển thị nhãn) */

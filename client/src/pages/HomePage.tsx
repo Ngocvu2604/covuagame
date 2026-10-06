@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/common/Button'
+import { useT } from '../i18n/translations'
 
 /** Trang chủ: chọn chế độ chơi */
 export function HomePage() {
   const navigate = useNavigate()
+  const t = useT()
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 text-slate-100">
@@ -31,17 +33,17 @@ export function HomePage() {
 
         <nav aria-label="Chọn chế độ chơi" className="flex w-72 flex-col gap-3">
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/offline')}>
-            🤖 Chơi với máy
+            {t('home.playVsAi')}
           </Button>
           <Button variant="secondary" size="lg" fullWidth onClick={() => navigate('/online')}>
-            🌐 Chơi Online
+            {t('home.playOnline')}
           </Button>
           <Button variant="ghost" size="lg" fullWidth onClick={() => navigate('/settings')}>
-            ⚙ Cài đặt
+            {t('home.settings')}
           </Button>
         </nav>
 
-        <p className="app-chrome-muted text-xs text-slate-600">Chơi với máy hoạt động hoàn toàn offline</p>
+        <p className="app-chrome-muted text-xs text-slate-600">{t('home.offlineNote')}</p>
       </div>
     </main>
   )

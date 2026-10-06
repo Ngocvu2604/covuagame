@@ -148,6 +148,23 @@ export class GameService {
     ack({ ok: true })
   }
 
+  rematchDecline(socket: Socket, ack: (data: SimpleAckData) => void): void {
+    const code = this.roomManager.findCodeBySocket(socket.id)
+    const room = code ? this.roomManager.findByCode(code) : undefined
+    const player = room ? findPlayerBySocket(room, socket.id) : undefined
+    if (!room || !player) {
+      ack({ ok: false, error: 'NOT_IN_ROOM' })
+      return
+    }
+    if (room.status !== 'finished' || !room.rematchOfferedBy || room.rematchOfferedBy === player.color) {
+      ack({ ok: false, error: 'NO_OFFER' })
+      return
+    }
+    room.rematchOfferedBy = null
+    this.io.to(room.code).emit(SOCKET_EVENTS.GAME_REMATCH_DECLINED, { from: player.color })
+    ack({ ok: true })
+  }
+
   rematchAccept(socket: Socket, ack: (data: SimpleAckData) => void): void {
     const code = this.roomManager.findCodeBySocket(socket.id)
     const room = code ? this.roomManager.findByCode(code) : undefined

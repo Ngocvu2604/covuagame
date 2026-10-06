@@ -25,10 +25,12 @@ import { leaveRoom } from '../online/roomService'
 import { opposite } from '../chess/chessUtils'
 import { RECONNECT_GRACE_SECONDS } from '../constants/game'
 import { SettingsDrawer } from '../components/settings/SettingsDrawer'
+import { useT } from '../i18n/translations'
 
 /** Trang chơi Online: chờ đối thủ (hiện mã phòng) → ván đấu realtime */
 export function OnlineGamePage() {
   const navigate = useNavigate()
+  const t = useT()
   const {
     room,
     yourColor,
@@ -42,10 +44,12 @@ export function OnlineGamePage() {
     lastMoveError,
     drawOfferFrom,
     rematchOfferFrom,
+    rematchDeclined,
     chatMessages,
     opponentDisconnected,
     restoring,
     handleSquareClick,
+    tryMoveTo,
     completePromotion,
     cancelPromotion,
     actions,
@@ -56,6 +60,7 @@ export function OnlineGamePage() {
   useGameSoundEvents({ state: gameState, myColor: yourColor })
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
 
   // Đếm ngượcGrace time khi đối thủ mất kết nối (khớp grace time của server)
   const [reconnectSeconds, setReconnectSeconds] = useState(RECONNECT_GRACE_SECONDS)
@@ -91,6 +96,14 @@ export function OnlineGamePage() {
   const opponentColor = opposite(yourColor)
   const isPlaying = room.status === 'playing' && gameState !== null
 
+  // Rời phòng: đang chơi thì hiện xác nhận — xác nhận mới tính rời trận (thua)
+  const requestLeave = () => {
+    if (room.status === 'playing') {
+      setLeaveConfirmOpen(true)
+      return
+    }
+    handleLeave()
+  }
   const handleLeave = () => {
     leaveRoom()
     useRoomStore.getState().reset()
@@ -102,14 +115,14 @@ export function OnlineGamePage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
         <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
-          <h2 className="text-xl font-bold">Phòng đã được tạo!</h2>
-          <p className="text-sm text-slate-400">Chia sẻ mã hoặc link mời cho đối thủ của bạn:</p>
+          <h2 className="text-xl font-bold">{t('wait.title')}</h2>
+          <p className="text-sm text-slate-400">{t('wait.share')}</p>
           <RoomCode code={room.code} />
           <CopyInviteLinkButton code={room.code} />
           <CopyRoomCodeButton code={room.code} />
-          <RoomStatus text="Đang chờ đối thủ tham gia…" />
+          <RoomStatus text={t('wait.status')} />
           <Button variant="ghost" onClick={handleLeave}>
-            ← Rời phòng
+            {t('wait.leave')}
           </Button>
         </div>
         <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
@@ -119,11 +132,11 @@ export function OnlineGamePage() {
 
   // ---- Màn hình ván đấu ----
   const opponentStatus = !opponentInfo?.connected
-    ? '⌛ Mất kết nối — chờ quay lại…'
+    ? t('game.opponentDisconnected')
     : gameState?.turn === opponentColor && gameState?.result === null
-      ? 'Đến lượt'
-      : 'Đang chờ'
-  const myStatus = isMyTurn ? 'Đến lượt' : 'Đang chờ'
+      ? t('game.yourTurn')
+      : t('game.waiting')
+  const myStatus = isMyTurn ? t('game.yourTurn') : t('game.waiting')
   const lastMoveRecord = gameState?.moveHistory.at(-1) ?? null
 
   const winnerLabel =
@@ -153,7 +166,7 @@ export function OnlineGamePage() {
                 data-testid="reconnect-banner"
                 className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-2 text-center text-sm text-gold"
               >
-                ⌛ Đối thủ mất kết nối — tự động xử thua sau {reconnectSeconds}s…
+                {t('game.reconnectBanner', { seconds: reconnectSeconds })}
               </div>
             )}
 
@@ -166,6 +179,8 @@ export function OnlineGamePage() {
               lastMoveIsCapture={lastMoveRecord?.captured != null}
               checkSquare={gameState?.checkSquare ?? null}
               onPieceHover={() => soundService.playHover()}
+              onDrop={tryMoveTo}
+              dragColor={isMyTurn ? yourColor : null}
               disabled={!isMyTurn}
               onSquareClick={handleSquareClick}
             />
@@ -201,14 +216,15 @@ export function OnlineGamePage() {
                 visible={room.status === 'finished'}
                 offerSentByMe={rematchOfferFrom === yourColor}
                 incomingOffer={!!rematchOfferFrom && rematchOfferFrom !== yourColor}
+                declined={rematchDeclined}
                 onOffer={() => void actions.rematchOffer()}
               />
-              <Button variant="ghost" fullWidth onClick={handleLeave}>
-                🚪 Rời phòng
+              <Button variant="ghost" fullWidth onClick={requestLeave}>
+                {t('game.leave')}
               </Button>
             </section>
 
-            {lastMoveError && <ErrorMessage message={`Nước đi bị từ chối (${lastMoveError})`} />}
+            {lastMoveError && <ErrorMessage message={t('game.moveRejected', { error: lastMoveError })} />}
 
             <ChatBox
               messages={chatMessages}
@@ -229,13 +245,13 @@ export function OnlineGamePage() {
             <span aria-hidden className="text-4xl">
               🤝
             </span>
-            <h2 className="mt-2 text-lg font-semibold">Đối thủ đề nghị hòa</h2>
+            <h2 className="mt-2 text-lg font-semibold">{t('draw.modalTitle')}</h2>
             <div className="mt-5 flex gap-2">
               <Button variant="primary" fullWidth onClick={() => void actions.drawAccept()}>
-                Chấp nhận
+                {t('draw.accept')}
               </Button>
               <Button variant="secondary" fullWidth onClick={() => void actions.drawDecline()}>
-                Từ chối
+                {t('draw.decline')}
               </Button>
             </div>
           </div>
@@ -248,10 +264,10 @@ export function OnlineGamePage() {
             <span aria-hidden className="text-4xl">
               🔁
             </span>
-            <h2 className="mt-2 text-lg font-semibold">Đối thủ muốn chơi lại</h2>
+            <h2 className="mt-2 text-lg font-semibold">{t('rematch.modalTitle')}</h2>
             <div className="mt-5">
               <Button variant="primary" fullWidth onClick={() => void actions.rematchAccept()}>
-                Chấp nhận chơi lại
+                {t('rematch.accept')}
               </Button>
             </div>
           </div>
@@ -262,11 +278,39 @@ export function OnlineGamePage() {
         <GameResult
           result={gameState.result}
           winnerLabel={winnerLabel}
-          rematchLabel={rematchOfferFrom === yourColor ? 'Đã mời chơi lại — chờ phản hồi…' : 'Mời chơi lại'}
+          rematchLabel={rematchOfferFrom === yourColor ? t('rematch.resultWaiting') : t('rematch.resultLabel')}
           rematchDisabled={rematchOfferFrom !== null}
           onRematch={() => void actions.rematchOffer()}
           onHome={handleLeave}
         />
+      )}
+
+      {/* Xác nhận rời trận: xác nhận mới tính thua (lý do 'left'), hủy thì tiếp tục */}
+      {leaveConfirmOpen && (
+        <Modal onClose={() => setLeaveConfirmOpen(false)}>
+          <div className="text-center">
+            <span aria-hidden className="text-4xl">
+              🚪
+            </span>
+            <h2 className="mt-2 text-lg font-semibold">{t('game.leaveConfirmTitle')}</h2>
+            <p className="mt-2 text-sm text-slate-400">{t('game.leaveConfirmBody')}</p>
+            <div className="mt-5 flex gap-2">
+              <Button
+                variant="danger"
+                fullWidth
+                onClick={() => {
+                  setLeaveConfirmOpen(false)
+                  handleLeave()
+                }}
+              >
+                {t('game.leaveConfirmGo')}
+              </Button>
+              <Button variant="secondary" fullWidth onClick={() => setLeaveConfirmOpen(false)}>
+                {t('game.leaveConfirmStay')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />

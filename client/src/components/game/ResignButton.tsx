@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../common/Button'
+import { useT } from '../../i18n/translations'
 
 interface ResignButtonProps {
   onConfirm: () => void
@@ -8,6 +9,7 @@ interface ResignButtonProps {
 
 /** Nút đầu hàng với bước xác nhận để tránh nhầm lẫn */
 export function ResignButton({ onConfirm, disabled = false }: ResignButtonProps) {
+  const t = useT()
   const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function ResignButton({ onConfirm, disabled = false }: ResignButtonProps)
   if (!confirming) {
     return (
       <Button variant="danger" fullWidth disabled={disabled} onClick={() => setConfirming(true)}>
-        🏳️ Đầu hàng
+        {t('resign.button')}
       </Button>
     )
   }
@@ -25,10 +27,10 @@ export function ResignButton({ onConfirm, disabled = false }: ResignButtonProps)
   return (
     <div className="flex gap-2">
       <Button variant="danger" fullWidth onClick={onConfirm}>
-        Xác nhận đầu hàng
+        {t('resign.confirm')}
       </Button>
       <Button variant="ghost" onClick={() => setConfirming(false)}>
-        Hủy
+        {t('common.cancel')}
       </Button>
     </div>
   )

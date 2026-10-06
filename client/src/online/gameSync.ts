@@ -48,6 +48,7 @@ function createSocketProvider(): GameSyncProvider {
     sendDrawDecline: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_DRAW_DECLINE),
     sendRematchOffer: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_OFFER),
     sendRematchAccept: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_ACCEPT),
+    sendRematchDecline: () => emitAck<SimpleAckData>(SOCKET_EVENTS.GAME_REMATCH_DECLINE),
     sendChat: (text: string) => emitAck<SimpleAckData>(SOCKET_EVENTS.CHAT_SEND, { text }),
   }
 }
@@ -62,6 +63,7 @@ const EVENT_HANDLERS = {
   [SOCKET_EVENTS.GAME_DRAW_OFFERED]: 'onDrawOffered',
   [SOCKET_EVENTS.GAME_DRAW_DECLINED]: 'onDrawDeclined',
   [SOCKET_EVENTS.GAME_REMATCH_OFFERED]: 'onRematchOffered',
+  [SOCKET_EVENTS.GAME_REMATCH_DECLINED]: 'onRematchDeclined',
   [SOCKET_EVENTS.CHAT_MESSAGE]: 'onChatMessage',
 } as const
 
@@ -104,6 +106,10 @@ export function sendRematchOffer(): Promise<SimpleAckData> {
 
 export function sendRematchAccept(): Promise<SimpleAckData> {
   return getGameSyncProvider().sendRematchAccept()
+}
+
+export function sendRematchDecline(): Promise<SimpleAckData> {
+  return getGameSyncProvider().sendRematchDecline()
 }
 
 export function sendChat(text: string): Promise<SimpleAckData> {

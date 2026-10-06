@@ -6,22 +6,29 @@ import { ErrorMessage } from '../components/common/ErrorMessage'
 import { TIME_CONTROL_OPTIONS } from '../constants/game'
 import { usePlayerStore } from '../state/playerStore'
 import { useRoomStore } from '../state/roomStore'
-import { createRoom, describeRoomError, joinRoom, prepareConnection } from '../online/roomService'
+import { getOnlineProvider, createRoom, describeRoomError, joinRoom, prepareConnection } from '../online/roomService'
 import { isValidPlayerName, isValidRoomCode } from '../utils/validation'
+import { useT } from '../i18n/translations'
+import type { TranslationKey } from '../i18n/translations'
 import type { CreateAckData, JoinAckData } from '../types/socket'
 
 type ColorChoice = 'white' | 'black' | 'random'
 
-const COLOR_CHOICES: [ColorChoice, string, string][] = [
-  ['white', '⚪', 'Trắng'],
-  ['black', '⚫', 'Đen'],
-  ['random', '🎲', 'Ngẫu nhiên'],
+const COLOR_CHOICES: [ColorChoice, string, TranslationKey][] = [
+  ['white', '⚪', 'lobby.colorWhite'],
+  ['black', '⚫', 'lobby.colorBlack'],
+  ['random', '🎲', 'lobby.colorRandom'],
 ]
 
 /** Sảnh Online: tạo phòng mới hoặc tham gia phòng bằng mã */
 export function OnlineLobbyPage() {
   const navigate = useNavigate()
+  const t = useT()
   const savedName = usePlayerStore((s) => s.name)
+  const provider = getOnlineProvider()
+  // Deploy lên domain thật mà thiếu VITE_APPWRITE_* → rơi về socket localhost → online không thể chạy
+  const misconfigured =
+    provider === 'socket' && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
 
   const [name, setName] = useState(savedName)
   const [colorChoice, setColorChoice] = useState<ColorChoice>('white')
@@ -39,7 +46,7 @@ export function OnlineLobbyPage() {
 
   const validateName = (): string | null => {
     if (!isValidPlayerName(name)) {
-      setError('Tên phải từ 1 đến 20 ký tự.')
+      setError(t('settings.errName'))
       return null
     }
     return name.trim()
@@ -47,7 +54,7 @@ export function OnlineLobbyPage() {
 
   const enterRoom = (ack: CreateAckData | JoinAckData) => {
     if (!ack.ok || !ack.room || !ack.color) {
-      setError(describeRoomError(ack.error))
+      setError(describeRoomError(ack.error, t))
       return
     }
     useRoomStore.getState().applyJoin(ack)
@@ -64,7 +71,7 @@ export function OnlineLobbyPage() {
       const ack = await createRoom({ playerName, colorChoice, timeMinutes })
       enterRoom(ack)
     } catch {
-      setError(describeRoomError())
+      setError(describeRoomError(undefined, t))
     } finally {
       setBusy(false)
     }
@@ -75,7 +82,7 @@ export function OnlineLobbyPage() {
     if (!playerName || busy) return
     const normalizedCode = code.trim().toUpperCase()
     if (!isValidRoomCode(normalizedCode)) {
-      setError('Mã phòng gồm đúng 6 ký tự.')
+      setError(t('lobby.errCodeLength'))
       return
     }
     setBusy(true)
@@ -85,7 +92,7 @@ export function OnlineLobbyPage() {
       const ack = await joinRoom(playerName, normalizedCode)
       enterRoom(ack)
     } catch {
-      setError(describeRoomError())
+      setError(describeRoomError(undefined, t))
     } finally {
       setBusy(false)
     }
@@ -94,23 +101,29 @@ export function OnlineLobbyPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
       <div className="flex w-full max-w-md flex-col gap-6 rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
-        <GameHeader title="Chơi Online" />
+        <GameHeader title={t('invite.title')} />
 
-        <section aria-label="Tên của bạn" className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-widest text-slate-500">Tên của bạn</p>
+        {misconfigured && (
+          <div role="alert" className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-gold">
+            {t('lobby.warnMisconfigured')}
+          </div>
+        )}
+
+        <section aria-label={t('lobby.yourName')} className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.yourName')}</p>
           <input
             value={name}
             maxLength={20}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Nhập tên của bạn"
+            placeholder={t('lobby.namePlaceholder')}
             className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none transition focus:border-emerald-500"
           />
         </section>
 
-        <section aria-label="Tạo phòng mới" className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-widest text-slate-500">Tạo phòng mới</p>
+        <section aria-label={t('lobby.createSection')} className="flex flex-col gap-3">
+          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.createSection')}</p>
           <div className="grid grid-cols-3 gap-2">
-            {COLOR_CHOICES.map(([value, emoji, label]) => (
+            {COLOR_CHOICES.map(([value, emoji, labelKey]) => (
               <button
                 key={value}
                 type="button"
@@ -118,12 +131,12 @@ export function OnlineLobbyPage() {
                 className={`flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 ${choiceButtonClass(colorChoice === value)}`}
               >
                 <span aria-hidden>{emoji}</span>
-                <span>{label}</span>
+                <span>{t(labelKey)}</span>
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs uppercase tracking-widest text-slate-500">Thời gian (phút)</p>
-          <div className="grid grid-cols-5 gap-2" aria-label="Thời gian (phút)">
+          <p className="mt-2 text-xs uppercase tracking-widest text-slate-500">{t('lobby.timeSection')}</p>
+          <div className="grid grid-cols-5 gap-2">
             {TIME_CONTROL_OPTIONS.map((option) => (
               <button
                 key={option.label}
@@ -136,16 +149,16 @@ export function OnlineLobbyPage() {
             ))}
           </div>
           <Button variant="primary" size="lg" fullWidth disabled={busy} onClick={() => void handleCreate()}>
-            🏠 Tạo phòng
+            {t('lobby.create')}
           </Button>
         </section>
 
         <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-slate-600">
-          <span className="h-px flex-1 bg-white/10" /> hoặc <span className="h-px flex-1 bg-white/10" />
+          <span className="h-px flex-1 bg-white/10" /> {t('lobby.or')} <span className="h-px flex-1 bg-white/10" />
         </div>
 
-        <section aria-label="Tham gia phòng" className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-widest text-slate-500">Tham gia phòng</p>
+        <section aria-label={t('lobby.joinSection')} className="flex flex-col gap-3">
+          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.joinSection')}</p>
           <input
             value={code}
             maxLength={6}
@@ -153,17 +166,17 @@ export function OnlineLobbyPage() {
             onKeyDown={(event) => {
               if (event.key === 'Enter') void handleJoin()
             }}
-            aria-label="Mã phòng"
+            aria-label={t('lobby.codeLabel')}
             className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-3 text-center font-mono text-2xl tracking-[0.3em] uppercase outline-none transition focus:border-emerald-500"
           />
           <Button variant="primary" size="lg" fullWidth disabled={busy} onClick={() => void handleJoin()}>
-            🚪 Tham gia phòng
+            {t('lobby.join')}
           </Button>
         </section>
 
         <ErrorMessage message={error} />
         <Button variant="ghost" fullWidth onClick={() => navigate('/')}>
-          ← Về trang chủ
+          {t('common.backHome')}
         </Button>
       </div>
     </main>

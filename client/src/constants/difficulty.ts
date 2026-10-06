@@ -1,5 +1,6 @@
 /**
  * Các mức độ AI hiển thị trên UI.
+ * Tên/mô tả là i18n keys — dịch tại src/i18n/translations.ts.
  * Cấu hình tìm kiếm tương ứng nằm ở src/ai/difficulty.ts.
  */
 
@@ -8,12 +9,27 @@ export type DifficultyId = 'easy' | 'medium' | 'hard'
 export interface DifficultyOption {
   id: DifficultyId
   emoji: string
-  name: string
-  description: string
+  nameKey: 'difficulty.easy' | 'difficulty.medium' | 'difficulty.hard'
+  descKey: 'difficulty.easyDesc' | 'difficulty.mediumDesc' | 'difficulty.hardDesc'
 }
 
 export const DIFFICULTY_OPTIONS: DifficultyOption[] = [
-  { id: 'easy', emoji: '🟢', name: 'Tân Binh', description: 'Dành cho người mới' },
-  { id: 'medium', emoji: '🟡', name: 'Kỳ Thủ', description: 'Thử thách vừa phải' },
-  { id: 'hard', emoji: '🔴', name: 'Đại Kiện Tướng', description: 'Thử thách cao' },
+  {
+    id: 'easy',
+    emoji: '🟢',
+    nameKey: 'difficulty.easy',
+    descKey: 'difficulty.easyDesc',
+  },
+  {
+    id: 'medium',
+    emoji: '🟡',
+    nameKey: 'difficulty.medium',
+    descKey: 'difficulty.mediumDesc',
+  },
+  {
+    id: 'hard',
+    emoji: '🔴',
+    nameKey: 'difficulty.hard',
+    descKey: 'difficulty.hardDesc',
+  },
 ]

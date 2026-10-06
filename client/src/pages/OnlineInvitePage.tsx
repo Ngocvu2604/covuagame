@@ -7,6 +7,7 @@ import { usePlayerStore } from '../state/playerStore'
 import { useRoomStore } from '../state/roomStore'
 import { describeRoomError, joinRoom, prepareConnection } from '../online/roomService'
 import { isValidRoomCode } from '../utils/validation'
+import { useT } from '../i18n/translations'
 
 /**
  * Trang đích của Invite Link (#/game/CODE):
@@ -15,6 +16,7 @@ import { isValidRoomCode } from '../utils/validation'
 export function OnlineInvitePage() {
   const params = useParams()
   const navigate = useNavigate()
+  const t = useT()
   const playerName = usePlayerStore((s) => s.name)
   const [error, setError] = useState<string | null>(null)
   const [joined, setJoined] = useState(false)
@@ -24,27 +26,27 @@ export function OnlineInvitePage() {
     void (async () => {
       const normalizedCode = (params.code ?? '').trim().toUpperCase()
       if (!isValidRoomCode(normalizedCode)) {
-        setError('Mã phòng không hợp lệ.')
+        setError(t('invite.invalidCode'))
         return
       }
       try {
-        await prepareConnection(playerName || 'Người chơi')
+        await prepareConnection(playerName || t('common.waiting'))
         const ack = await joinRoom(playerName || 'Người chơi', normalizedCode)
         if (cancelled) return
         if (!ack.ok || !ack.room || !ack.color) {
-          setError(describeRoomError(ack.error))
+          setError(describeRoomError(ack.error, t))
           return
         }
         useRoomStore.getState().applyJoin(ack)
         setJoined(true)
       } catch {
-        if (!cancelled) setError(describeRoomError())
+        if (!cancelled) setError(describeRoomError(undefined, t))
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [params.code, playerName])
+  }, [params.code, playerName, t])
 
   if (joined) {
     return <Navigate to="/online/game" replace />
@@ -53,7 +55,7 @@ export function OnlineInvitePage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
       <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
-        <GameHeader title="Tham gia phòng" />
+        <GameHeader title={t('invite.title')} />
         {error ? (
           <>
             <span aria-hidden className="text-4xl">
@@ -61,7 +63,7 @@ export function OnlineInvitePage() {
             </span>
             <ErrorMessage message={error} />
             <Button variant="secondary" fullWidth onClick={() => navigate('/online')}>
-              Về sảnh Online
+              {t('invite.backToLobby')}
             </Button>
           </>
         ) : (
@@ -70,7 +72,8 @@ export function OnlineInvitePage() {
               🔗
             </span>
             <p className="text-sm text-slate-400">
-              Đang vào phòng <span className="font-mono font-bold text-emerald-300">{params.code}</span>…
+              {t('invite.joining')}{' '}
+              <span className="font-mono font-bold text-emerald-300">{params.code}</span>…
             </p>
           </>
         )}

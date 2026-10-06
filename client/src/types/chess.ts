@@ -24,6 +24,12 @@ export type BoardThemeId =
 /** Chế độ hiển thị tổng thể của trang */
 export type DisplayMode = 'dark' | 'dim' | 'light'
 
+/** Ngôn ngữ giao diện */
+export type Language = 'vi' | 'en'
+
+/** Cách di chuyển quân cờ */
+export type MoveMode = 'click' | 'drag' | 'both'
+
 /** Loại quân cờ */
 export type PieceType = 'king' | 'queen' | 'rook' | 'bishop' | 'knight' | 'pawn'
 
@@ -54,8 +60,9 @@ export type GameEndReason =
   | 'fifty-move'
   | 'insufficient-material'
   | 'resignation'
-  | 'timeout'
+  | 'left'
   | 'abandoned'
+  | 'timeout'
   | 'agreement'
 
 /** Kết quả trận đấu — winner = null nghĩa là hòa */

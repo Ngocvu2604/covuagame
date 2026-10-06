@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { MoveRecord } from '../../types/chess'
 import { MoveItem } from './MoveItem'
+import { useT } from '../../i18n/translations'
 
 interface MoveHistoryProps {
   moves: MoveRecord[]
@@ -8,6 +9,7 @@ interface MoveHistoryProps {
 
 /** Lịch sử nước đi dạng cặp số nước, tự cuộn xuống nước mới nhất */
 export function MoveHistory({ moves }: MoveHistoryProps) {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -23,16 +25,14 @@ export function MoveHistory({ moves }: MoveHistoryProps) {
 
   return (
     <section
-      aria-label="Lịch sử nước đi"
+      aria-label={t('history.title')}
       className="overflow-hidden rounded-xl border border-white/5 bg-slate-900/60"
     >
       <p className="border-b border-white/5 px-4 py-2 text-xs uppercase tracking-widest text-slate-500">
-        Lịch sử nước đi
+        {t('history.title')}
       </p>
       <div ref={containerRef} className="max-h-64 overflow-y-auto py-1">
-        {pairs.length === 0 && (
-          <p className="px-4 py-3 text-sm text-slate-500">Chưa có nước đi nào</p>
-        )}
+        {pairs.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">{t('history.empty')}</p>}
         {pairs.map((pair, index) => (
           <div
             key={index}

@@ -5,6 +5,8 @@ import { toPieceSymbol } from '../chess/chessUtils'
 import { useRoomStore, getActiveRoomCode, clearActiveRoom } from '../state/roomStore'
 import { pushToast } from '../state/uiStore'
 import { usePlayerStore } from '../state/playerStore'
+import { useSettingsStore } from '../state/settingsStore'
+import { getT } from '../i18n/translations'
 import {
   sendChat,
   sendDrawAccept,
@@ -12,6 +14,7 @@ import {
   sendDrawOffer,
   sendMove,
   sendRematchAccept,
+  sendRematchDecline,
   sendRematchOffer,
   sendResign,
   subscribeGameEvents,
@@ -31,6 +34,7 @@ export function useOnlineGame() {
   const clock = useRoomStore((s) => s.clock)
   const drawOfferFrom = useRoomStore((s) => s.drawOfferFrom)
   const rematchOfferFrom = useRoomStore((s) => s.rematchOfferFrom)
+  const [rematchDeclined, setRematchDeclined] = useState(false)
   const chatMessages = useRoomStore((s) => s.chatMessages)
 
   const [selectedSquare, setSelectedSquare] = useState<SquareName | null>(null)
@@ -61,10 +65,20 @@ export function useOnlineGame() {
       },
       // Trạng thái kết nối đã nằm trong room:updated (cập nhật player.connected)
       onPlayerDisconnected: () => undefined,
-      onPlayerReconnected: (payload) => pushToast(`${payload.name} đã kết nối lại`, 'success'),
+      onPlayerReconnected: (payload) =>
+        pushToast(getT()('game.reconnectedToast', { name: payload.name }), 'success'),
       onDrawOffered: (payload) => useRoomStore.getState().setDrawOffer(payload.from),
       onDrawDeclined: () => useRoomStore.getState().setDrawOffer(null),
       onRematchOffered: (payload) => useRoomStore.getState().setRematchOffer(payload.from),
+      onRematchDeclined: (payload) => {
+        const store = useRoomStore.getState()
+        // Chỉ người GỬI lời mời thấy "Bị từ chối" (người từ chối tự biết vì họ bấm)
+        if (store.rematchOfferFrom && payload.from !== store.yourColor) {
+          store.setRematchOffer(null)
+          setRematchDeclined(true)
+          window.setTimeout(() => setRematchDeclined(false), 6000)
+        }
+      },
       onChatMessage: (payload) => useRoomStore.getState().appendChat(payload),
     })
   }, [])
@@ -122,6 +136,9 @@ export function useOnlineGame() {
     return map
   }, [gameState?.pieces])
 
+  // Chế độ 'drag': click không đi — chỉ kéo-thả mới gửi nước
+  const moveMode = useSettingsStore((s) => s.moveMode)
+
   const submitMove = useCallback(
     async (from: SquareName, to: SquareName, promotion?: PieceType) => {
       setLastMoveError(null)
@@ -137,15 +154,37 @@ export function useOnlineGame() {
     [],
   )
 
+  /** Kéo-thả: thả quân vào ô đích (bàn đã được chọn khi dragstart) */
+  const tryMoveTo = useCallback(
+    (target: SquareName) => {
+      if (!isMyTurn || !gameState || pendingPromotion) return
+      if (!selectedSquare) return
+      if (!legalTargets.includes(target)) {
+        setSelectedSquare(null)
+        return
+      }
+      if (isPromotionNeededFromFen(gameState.fen, selectedSquare, target)) {
+        setPendingPromotion({ from: selectedSquare, to: target })
+      } else {
+        void submitMove(selectedSquare, target)
+      }
+      setSelectedSquare(null)
+    },
+    [isMyTurn, gameState, pendingPromotion, selectedSquare, legalTargets, submitMove],
+  )
+
   const handleSquareClick = useCallback(
     (square: SquareName) => {
       if (!isMyTurn || !gameState || pendingPromotion) return
 
       if (selectedSquare && legalTargets.includes(square)) {
-        if (isPromotionNeededFromFen(gameState.fen, selectedSquare, square)) {
-          setPendingPromotion({ from: selectedSquare, to: square })
-        } else {
-          void submitMove(selectedSquare, square)
+        // Chế độ 'drag': click không đi — chỉ kéo-thả mới gửi nước
+        if (moveMode !== 'drag') {
+          if (isPromotionNeededFromFen(gameState.fen, selectedSquare, square)) {
+            setPendingPromotion({ from: selectedSquare, to: square })
+          } else {
+            void submitMove(selectedSquare, square)
+          }
         }
         setSelectedSquare(null)
         return
@@ -158,7 +197,7 @@ export function useOnlineGame() {
         setSelectedSquare(null)
       }
     },
-    [isMyTurn, gameState, pendingPromotion, selectedSquare, legalTargets, piecesBySquare, yourColor, submitMove],
+    [isMyTurn, gameState, pendingPromotion, selectedSquare, legalTargets, piecesBySquare, yourColor, moveMode, submitMove],
   )
 
   const completePromotion = useCallback(
@@ -193,6 +232,10 @@ export function useOnlineGame() {
       },
       rematchAccept: async () => {
         await sendRematchAccept()
+        useRoomStore.getState().setRematchOffer(null)
+      },
+      rematchDecline: async () => {
+        await sendRematchDecline()
         useRoomStore.getState().setRematchOffer(null)
       },
       chat: async (text: string) => {
@@ -241,8 +284,10 @@ export function useOnlineGame() {
     lastMoveError,
     drawOfferFrom,
     rematchOfferFrom,
+    rematchDeclined,
     chatMessages,
     handleSquareClick,
+    tryMoveTo,
     completePromotion,
     cancelPromotion,
     actions,

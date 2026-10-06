@@ -31,4 +31,8 @@ export function registerGameHandlers(socket: Socket, gameService: GameService): 
   socket.on(SOCKET_EVENTS.GAME_REMATCH_ACCEPT, (ack: unknown) => {
     gameService.rematchAccept(socket, (data) => replyAck(ack, data))
   })
+
+  socket.on(SOCKET_EVENTS.GAME_REMATCH_DECLINE, (ack: unknown) => {
+    gameService.rematchDecline(socket, (data) => replyAck(ack, data))
+  })
 }

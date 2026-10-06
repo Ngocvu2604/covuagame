@@ -3,6 +3,7 @@ import type { ChatMessage } from '../../types/room'
 import type { PlayerColor } from '../../types/chess'
 import { ChatMessageItem } from './ChatMessage'
 import { ChatInput } from './ChatInput'
+import { useT } from '../../i18n/translations'
 
 interface ChatBoxProps {
   messages: ChatMessage[]
@@ -13,6 +14,7 @@ interface ChatBoxProps {
 
 /** Hộp chat giữa 2 người chơi: danh sách bong bóng + ô nhập, tự cuộn xuống cuối */
 export function ChatBox({ messages, yourColor, disabled = false, onSend }: ChatBoxProps) {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -22,18 +24,20 @@ export function ChatBox({ messages, yourColor, disabled = false, onSend }: ChatB
 
   return (
     <section
-      aria-label="Chat"
+      aria-label={t('chat.title')}
       className="flex flex-col rounded-xl border border-white/5 bg-slate-900/60"
     >
       <p className="border-b border-white/5 px-4 py-2 text-xs uppercase tracking-widest text-slate-500">
-        Tin nhắn
+        {t('chat.title')}
       </p>
       <div ref={containerRef} className="flex max-h-44 min-h-24 flex-col gap-1.5 overflow-y-auto p-3">
-        {messages.length === 0 && (
-          <p className="text-sm text-slate-500">Chúc đối thủ may mắn nào!</p>
-        )}
+        {messages.length === 0 && <p className="text-sm text-slate-500">{t('chat.empty')}</p>}
         {messages.map((message, index) => (
-          <ChatMessageItem key={`${message.sentAt}-${index}`} message={message} isMine={message.from === yourColor} />
+          <ChatMessageItem
+            key={`${message.sentAt}-${index}`}
+            message={message}
+            isMine={message.from === yourColor}
+          />
         ))}
       </div>
       <div className="border-t border-white/5 p-3">

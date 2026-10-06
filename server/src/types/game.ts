@@ -29,6 +29,8 @@ export type GameEndReason =
   | 'fifty-move'
   | 'insufficient-material'
   | 'resignation'
+  | 'left'
+  | 'abandoned'
   | 'timeout'
   | 'agreement'
 

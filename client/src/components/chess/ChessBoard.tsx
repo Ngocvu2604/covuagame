@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { CSSProperties } from 'react'
-import type { LastMove, PieceOnSquare, PlayerColor, SquareName } from '../../types/chess'
+import type { LastMove, MoveMode, PieceOnSquare, PlayerColor, SquareName } from '../../types/chess'
 import { FILES, RANKS, getBoardTheme } from '../../constants/chess'
 import { getViewPosition } from '../../chess/chessUtils'
 import { useSettingsStore } from '../../state/settingsStore'
@@ -26,6 +26,14 @@ interface ChessBoardProps {
   checkSquare: SquareName | null
   /** Rê chuột qua một quân cờ (chỉ gọi với ô có quân, bàn đang tương tác) */
   onPieceHover?: (square: SquareName) => void
+  /** Bắt đầu kéo một quân cờ (chỉ gọi với quân của người chơi đúng màu) */
+  onDragStart?: (square: SquareName) => void
+  /** Thả quân vào ô (chỉ gọi khi ô là đích hợp lệ) */
+  onDrop?: (square: SquareName) => void
+  /** Màu quân được phép kéo (null = không kéo được quân nào) */
+  dragColor?: PlayerColor | null
+  /** Chế độ di chuyển quân */
+  moveMode?: MoveMode
   /** Chặn tương tác (khi ván đã kết thúc / tới lượt đối thủ) */
   disabled?: boolean
   onSquareClick: (square: SquareName) => void
@@ -45,6 +53,10 @@ export function ChessBoard({
   lastMoveIsCapture = false,
   checkSquare,
   onPieceHover,
+  onDragStart,
+  onDrop,
+  dragColor = null,
+  moveMode = 'both',
   disabled = false,
   onSquareClick,
 }: ChessBoardProps) {
@@ -113,6 +125,14 @@ export function ChessBoard({
                 slideFrom={slideFrom?.square === square ? { x: slideFrom.x, y: slideFrom.y } : undefined}
                 captureKey={lastMoveIsCapture && lastMove?.to === square ? `cap-${lastMove.from}${lastMove.to}` : undefined}
                 onPieceHover={onPieceHover ? () => onPieceHover(square) : undefined}
+                onDragStart={onDragStart ? () => onDragStart(square) : undefined}
+                onDrop={onDrop ? () => onDrop(square) : undefined}
+                draggable={
+                  !disabled &&
+                  moveMode !== 'click' &&
+                  dragColor !== null &&
+                  pieceBySquare.get(square)?.color === dragColor
+                }
                 rankLabel={showCoordinates && colIndex === 0 ? rank : null}
                 fileLabel={showCoordinates && rowIndex === 7 ? file.toUpperCase() : null}
                 interactive={!disabled}

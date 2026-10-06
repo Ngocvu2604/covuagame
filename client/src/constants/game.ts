@@ -9,8 +9,9 @@ export const END_REASON_LABELS: Record<GameEndReason, string> = {
   'fifty-move': 'Luật 50 nước',
   'insufficient-material': 'Không đủ lực lượng chiếu hết',
   resignation: 'Đầu hàng',
+  left: 'Rời trận',
+  abandoned: 'Mất kết nối quá lâu',
   timeout: 'Hết giờ',
-  abandoned: 'Đối thủ rời trận quá lâu',
   agreement: 'Thỏa thuận hòa',
 }
 
