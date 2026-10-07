@@ -114,12 +114,14 @@ export function OnlineGamePage() {
   if (room.status === 'waiting') {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-        <div className="flex w-full max-w-md flex-col items-center gap-5 card p-8 text-center shadow-2xl backdrop-blur">
+        <div className="flex w-full max-w-lg flex-col items-center gap-4 card p-6 text-center shadow-2xl backdrop-blur">
           <h2 className="text-lg font-bold">{t('wait.title')}</h2>
           <p className="text-sm text-slate-400">{t('wait.share')}</p>
           <RoomCode code={room.code} />
-          <CopyInviteLinkButton code={room.code} />
-          <CopyRoomCodeButton code={room.code} />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <CopyInviteLinkButton code={room.code} />
+            <CopyRoomCodeButton code={room.code} />
+          </div>
           <RoomStatus text={t('wait.status')} />
           <Button variant="ghost" onClick={handleLeave}>
             {t('wait.leave')}

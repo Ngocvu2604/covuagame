@@ -123,7 +123,7 @@ export function OfflineGamePage() {
   if (phase === 'setup') {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-        <div className="w-full max-w-md card p-6 shadow-2xl backdrop-blur">
+        <div className="w-full max-w-lg card p-6">
           <h2 className="text-center text-lg font-bold">{t('setup.title')}</h2>
           <p className="mt-1 text-center text-sm text-slate-400">
             {t('setup.subtitle')}

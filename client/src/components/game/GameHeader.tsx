@@ -5,23 +5,27 @@ interface GameHeaderProps {
   title: string
   /** Mở panel cài đặt (nếu trang có SettingsDrawer) */
   onOpenSettings?: () => void
+  /** Ẩn nút quay lại (màn hình đã có nút về trang chủ riêng) */
+  back?: boolean
 }
 
-/** Thanh đầu trang màn hình game: nút về trang chủ + tiêu đề + cài đặt */
-export function GameHeader({ title, onOpenSettings }: GameHeaderProps) {
+/** Thanh đầu trang màn hình game: tiêu đề căn giữa + (tuỳ chọn) nút về/cài đặt */
+export function GameHeader({ title, onOpenSettings, back = true }: GameHeaderProps) {
   const navigate = useNavigate()
   const t = useT()
   return (
     <header className="relative flex w-full items-center">
-      <button
-        type="button"
-        aria-label={t('header.home')}
-        onClick={() => navigate('/')}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition hover:bg-slate-700 active:scale-95"
-      >
-        ←
-      </button>
-      <h1 className="pointer-events-none flex-1 text-center text-lg font-bold text-slate-100">
+      {back && (
+        <button
+          type="button"
+          aria-label={t('header.home')}
+          onClick={() => navigate('/')}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition hover:bg-slate-700 active:scale-95"
+        >
+          ←
+        </button>
+      )}
+      <h1 className="pointer-events-none absolute left-1/2 top-1/2 w-max max-w-[70%] -translate-x-1/2 -translate-y-1/2 truncate text-center text-lg font-bold text-slate-100">
         {title}
       </h1>
       {onOpenSettings && (

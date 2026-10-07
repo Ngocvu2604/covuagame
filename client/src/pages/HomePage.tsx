@@ -8,8 +8,11 @@ export function HomePage() {
   const t = useT()
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-8 text-slate-100">
-      <div className="flex flex-col items-center gap-8 text-center">
+    /* min-h-svh: tâm tính trên vùng hiển thị ổn định (không bị lệch khi thanh
+       địa chỉ trình duyệt thu/mở). my-auto: căn giữa khi đủ chỗ, tự chuyển thành
+       cuộn bình thường khi màn quá thấp (điện thoại ngang) thay vì cắt mất đầu. */
+    <main className="flex min-h-svh flex-col px-4 py-6 text-slate-100">
+      <div className="my-auto flex flex-col items-center gap-8 text-center">
         <header>
           <span aria-hidden className="select-none text-6xl leading-none text-[#d9c9a4]">
             ♞

@@ -34,11 +34,12 @@ export function RoomCode({ code }: RoomCodeProps) {
   const [visible, setVisible] = useState(false)
 
   return (
-    <div className="flex items-center gap-2">
+    /* Mã + nút mắt là MỘT điều khiển: chung khung, nút mắt nằm gọn bên trong */
+    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/60 py-2 pl-5 pr-1.5">
       <p
         data-testid="room-code"
         aria-label={visible ? code : undefined}
-        className="min-w-0 select-all rounded-lg border border-white/10 bg-slate-800/60 px-5 py-3 font-mono text-3xl font-bold tracking-[0.25em] text-emerald-300 sm:text-4xl sm:tracking-[0.3em]"
+        className="min-w-0 select-all font-mono text-3xl font-bold tracking-[0.25em] text-emerald-300 sm:text-4xl"
       >
         {visible ? code : '•'.repeat(code.length)}
       </p>
@@ -48,10 +49,8 @@ export function RoomCode({ code }: RoomCodeProps) {
         aria-pressed={visible}
         title={visible ? t('wait.hideCode') : t('wait.showCode')}
         onClick={() => setVisible((v) => !v)}
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
-          visible
-            ? 'border-emerald-500/50 bg-emerald-600/15 text-emerald-300'
-            : 'border-white/10 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
+        className={`ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+          visible ? 'bg-emerald-600/25 text-emerald-300' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700'
         }`}
       >
         <EyeIcon off={visible} />

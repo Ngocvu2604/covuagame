@@ -100,8 +100,8 @@ export function OnlineLobbyPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-      <div className="flex w-full max-w-md flex-col gap-6 card p-6 shadow-2xl backdrop-blur">
-        <GameHeader title={t('invite.title')} />
+      <div className="flex w-full max-w-lg flex-col gap-6 card p-6 shadow-2xl backdrop-blur">
+        <GameHeader title={t('invite.title')} back={false} />
 
         {misconfigured && (
           <div role="alert" className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-gold">
