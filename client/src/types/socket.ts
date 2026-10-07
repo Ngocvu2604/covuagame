@@ -47,6 +47,8 @@ export interface GameStartedPayload {
   room: RoomPublicData
   state: GameState
   clock?: ClockInfo | null
+  /** Màu của người nhận sự kiện (Appwrite suy ra từ userId; socket gửi kèm) */
+  color?: PlayerColor | null
 }
 
 export interface MoveAppliedPayload {

@@ -142,6 +142,7 @@ class AppwriteSync implements GameSyncProvider {
           room: toRoomPublicData(doc),
           state: this.buildState(),
           clock: clockFromDoc(doc),
+          color: this.myColorOf(doc),
         })
       }
       // Phòng đã kết thúc trước đó (reload giữa/khi sau ván) → phát lại kết quả.
@@ -218,6 +219,7 @@ class AppwriteSync implements GameSyncProvider {
         room: toRoomPublicData(doc),
         state: this.buildState(),
         clock: clockFromDoc(doc),
+        color: this.myColorOf(doc),
       })
       return
     }
@@ -247,8 +249,10 @@ class AppwriteSync implements GameSyncProvider {
         const from = colorOfUser(doc.rematchOfferedBy, doc)
         if (from) this.handlers?.onRematchOffered({ from })
       } else if (prev?.rematchOfferedBy) {
-        // Lời mời bị từ chối (xóa sau khi có) — người gửi thấy trạng thái "Bị từ chối"
-        this.handlers?.onRematchDeclined({ from: 'white' })
+        // Lời mời bị xóa mà gameNumber không đổi = bị TỪ CHỐI (chấp nhận sẽ
+        // tăng gameNumber và nhánh ở trên đã return). from = người từng mời.
+        const from = colorOfUser(prev.rematchOfferedBy, prev)
+        this.handlers?.onRematchDeclined({ from: from ?? 'white' })
       }
       this.lastEmittedRematchOffer = doc.rematchOfferedBy
     }
@@ -502,6 +506,11 @@ class AppwriteSync implements GameSyncProvider {
     return this.cachedUserId
   }
 
+  /** Màu của client này theo ghế hiện tại trong doc (rematch có hoán đổi ghế) */
+  private myColorOf(doc: RoomDocument): PlayerColor | null {
+    return this.cachedUserId ? colorOfUser(this.cachedUserId, doc) : null
+  }
+
   private async updateRoomIfPlaying(
     build: (userId: string, doc: RoomDocument) => Record<string, unknown> | null,
   ): Promise<SimpleAckData> {
@@ -627,6 +636,7 @@ class AppwriteSync implements GameSyncProvider {
       room: toRoomPublicData(doc),
       state: this.buildState(),
       clock: clockFromDoc(doc),
+      color: this.myColorOf(doc),
     })
   }
 

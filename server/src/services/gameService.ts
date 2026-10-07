@@ -186,11 +186,14 @@ export class GameService {
     this.gameManager.createGame(room.code, room.timeMinutes)
     const state = this.gameManager.getState(room.code)
 
-    this.io.to(room.code).emit(SOCKET_EVENTS.GAME_STARTED, {
-      room: toPublicData(room),
-      state: state,
-      clock: this.gameManager.getClock(room.code),
-    })
+    for (const player of room.players) {
+      this.io.to(player.socketId).emit(SOCKET_EVENTS.GAME_STARTED, {
+        room: toPublicData(room),
+        state: state,
+        clock: this.gameManager.getClock(room.code),
+        color: player.color,
+      })
+    }
     this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
     ack({ ok: true })
   }

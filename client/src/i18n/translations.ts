@@ -92,7 +92,7 @@ const vi = {
   'game.reconnectedToast': '{name} đã kết nối lại',
   'game.abandonWinToast': 'Đối thủ mất kết nối quá lâu — bạn thắng',
   'game.moveRejected': 'Nước đi bị từ chối ({error})',
-  'game.leave': '🚪 Rời phòng',
+  'game.leave': 'Rời phòng',
   'game.leaveConfirmTitle': 'Bạn có chắc muốn thoát không?',
   'game.leaveConfirmBody': 'Rời trận lúc đang chơi sẽ bị tính là thua.',
   'game.leaveConfirmGo': 'Thoát trận',
@@ -107,20 +107,21 @@ const vi = {
   'resign.confirm': 'Xác nhận đầu hàng',
 
   // Draw
-  'draw.offer': '½ Xin hòa',
+  'draw.offer': 'Xin hòa',
   'draw.offered': '½ Đã đề nghị hòa — chờ phản hồi…',
   'draw.modalTitle': 'Đối thủ đề nghị hòa',
   'draw.accept': 'Chấp nhận',
   'draw.decline': 'Từ chối',
 
   // Rematch
-  'rematch.offer': '🔁 Mời chơi lại',
-  'rematch.offered': '🔁 Đã mời chơi lại — chờ phản hồi…',
-  'rematch.declinedBtn': '✕ Lời mời bị từ chối',
+  'rematch.offer': 'Mời chơi lại',
+  'rematch.offered': 'Đã mời chơi lại — chờ phản hồi…',
+  'rematch.declinedBtn': 'Lời mời bị từ chối',
   'rematch.modalTitle': 'Đối thủ muốn chơi lại',
   'rematch.accept': 'Chấp nhận chơi lại',
   'rematch.resultLabel': 'Mời chơi lại',
   'rematch.resultWaiting': 'Đã mời chơi lại — chờ phản hồi…',
+  'rematch.resultIncoming': 'Đối thủ muốn chơi lại',
 
   // Result overlay
   'result.wins': 'thắng!',
@@ -303,7 +304,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'game.reconnectedToast': '{name} reconnected',
   'game.abandonWinToast': 'Opponent disconnected too long — you win',
   'game.moveRejected': 'Move rejected ({error})',
-  'game.leave': '🚪 Leave room',
+  'game.leave': 'Leave room',
   'game.leaveConfirmTitle': 'Are you sure you want to leave?',
   'game.leaveConfirmBody': 'Leaving during a game counts as a loss.',
   'game.leaveConfirmGo': 'Leave game',
@@ -316,19 +317,20 @@ const en: Partial<Record<TranslationKey, string>> = {
   'resign.button': 'Resign',
   'resign.confirm': 'Confirm resignation',
 
-  'draw.offer': '½ Offer draw',
+  'draw.offer': 'Offer draw',
   'draw.offered': '½ Draw offered — waiting…',
   'draw.modalTitle': 'Opponent offers a draw',
   'draw.accept': 'Accept',
   'draw.decline': 'Decline',
 
-  'rematch.offer': '🔁 Offer rematch',
-  'rematch.offered': '🔁 Rematch offered — waiting…',
-  'rematch.declinedBtn': '✕ Rematch declined',
+  'rematch.offer': 'Offer rematch',
+  'rematch.offered': 'Rematch offered — waiting…',
+  'rematch.declinedBtn': 'Rematch declined',
   'rematch.modalTitle': 'Opponent wants a rematch',
   'rematch.accept': 'Accept rematch',
   'rematch.resultLabel': 'Offer rematch',
   'rematch.resultWaiting': 'Rematch offered — waiting…',
+  'rematch.resultIncoming': 'Opponent wants a rematch',
 
   'result.wins': 'wins!',
   'result.whiteWins': 'White wins',

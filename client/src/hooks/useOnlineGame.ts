@@ -50,6 +50,8 @@ export function useOnlineGame() {
       onGameStarted: (payload) => {
         const store = useRoomStore.getState()
         store.setRoom(payload.room)
+        // Rematch hoán đổi ghế → màu của tôi phải cập nhật theo server/provider
+        if (payload.color) store.setYourColor(payload.color)
         store.setGameState(payload.state)
         store.setClock(payload.clock, Date.now())
         store.setDrawOffer(null)
@@ -72,10 +74,11 @@ export function useOnlineGame() {
       onDrawOffered: (payload) => useRoomStore.getState().setDrawOffer(payload.from),
       onDrawDeclined: () => useRoomStore.getState().setDrawOffer(null),
       onRematchOffered: (payload) => useRoomStore.getState().setRematchOffer(payload.from),
-      onRematchDeclined: (payload) => {
+      onRematchDeclined: () => {
         const store = useRoomStore.getState()
-        // Chỉ người GỬI lời mời thấy "Bị từ chối" (người từ chối tự biết vì họ bấm)
-        if (store.rematchOfferFrom && payload.from !== store.yourColor) {
+        // from emit = người từng mời: chỉ NGƯỜI MỜI thấy "bị từ chối" (đọc
+        // màu qua getState() để tránh closure cũ sau khi rematch đổi màu)
+        if (store.yourColor && store.rematchOfferFrom === store.yourColor) {
           store.setRematchOffer(null)
           setRematchDeclined(true)
           window.setTimeout(() => setRematchDeclined(false), 6000)

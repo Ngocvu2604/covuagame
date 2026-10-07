@@ -245,7 +245,6 @@ export function OnlineGamePage() {
         <Modal>
           <div className="text-center">
             <span aria-hidden className="text-4xl">
-              🤝
             </span>
             <h2 className="mt-2 text-lg font-semibold">{t('draw.modalTitle')}</h2>
             <div className="mt-5 flex gap-2">
@@ -260,11 +259,29 @@ export function OnlineGamePage() {
         </Modal>
       )}
 
+      {gameState?.result && room.status === 'finished' && (
+        <GameResult
+          result={gameState.result}
+          winnerLabel={winnerLabel}
+          rematchLabel={
+            rematchOfferFrom === yourColor
+              ? t('rematch.resultWaiting')
+              : rematchOfferFrom
+                ? t('rematch.resultIncoming')
+                : t('rematch.resultLabel')
+          }
+          rematchDisabled={rematchOfferFrom !== null}
+          onRematch={() => void actions.rematchOffer()}
+          onHome={handleLeave}
+        />
+      )}
+
+      {/* Lời mời chơi lại của đối thủ — render SAU GameResult để đè lên trên,
+          nếu không sẽ bị overlay kết thúc che mất và không thể chấp nhận */}
       {rematchOfferFrom && rematchOfferFrom !== yourColor && gameState?.result && (
         <Modal>
           <div className="text-center">
             <span aria-hidden className="text-4xl">
-              🔁
             </span>
             <h2 className="mt-2 text-lg font-semibold">{t('rematch.modalTitle')}</h2>
             <div className="mt-5">
@@ -274,17 +291,6 @@ export function OnlineGamePage() {
             </div>
           </div>
         </Modal>
-      )}
-
-      {gameState?.result && room.status === 'finished' && (
-        <GameResult
-          result={gameState.result}
-          winnerLabel={winnerLabel}
-          rematchLabel={rematchOfferFrom === yourColor ? t('rematch.resultWaiting') : t('rematch.resultLabel')}
-          rematchDisabled={rematchOfferFrom !== null}
-          onRematch={() => void actions.rematchOffer()}
-          onHome={handleLeave}
-        />
       )}
 
       {/* Xác nhận rời trận: xác nhận mới tính thua (lý do 'left'), hủy thì tiếp tục */}

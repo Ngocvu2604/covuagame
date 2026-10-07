@@ -122,11 +122,14 @@ export class RoomService {
     const state = this.gameManager.getState(room.code)
     const clock = this.gameManager.getClock(room.code)
 
-    this.io.to(room.code).emit(SOCKET_EVENTS.GAME_STARTED, {
-      room: toPublicData(room),
-      state: state,
-      clock,
-    })
+    for (const player of room.players) {
+      this.io.to(player.socketId).emit(SOCKET_EVENTS.GAME_STARTED, {
+        room: toPublicData(room),
+        state: state,
+        clock,
+        color: player.color,
+      })
+    }
     this.io.to(room.code).emit(SOCKET_EVENTS.ROOM_UPDATED, { room: toPublicData(room) })
 
     return { ok: true, room: toPublicData(room), color, state, clock }
