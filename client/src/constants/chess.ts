@@ -27,9 +27,9 @@ export const BOARD_THEMES: Record<BoardThemeId, BoardTheme> = {
   wood: {
     id: 'wood',
     label: 'Wood',
-    light: '#e8cfa9',
-    dark: '#9c6b3f',
-    glow: 'rgba(156, 107, 63, 0.4)',
+    light: '#ecd8ae',
+    dark: '#a97e4f',
+    glow: 'rgba(93, 69, 43, 0.55)',
   },
   green: {
     id: 'green',
@@ -79,7 +79,7 @@ export const BOARD_THEMES: Record<BoardThemeId, BoardTheme> = {
 export const BOARD_THEME_LIST = Object.values(BOARD_THEMES)
 
 /** Theme mặc định + fallback khi setting đã lưu không còn hợp lệ */
-export const DEFAULT_BOARD_THEME: BoardThemeId = 'classic'
+export const DEFAULT_BOARD_THEME: BoardThemeId = 'wood'
 
 export function getBoardTheme(id: string | undefined): BoardTheme {
   if (id && id in BOARD_THEMES) return BOARD_THEMES[id as BoardThemeId]

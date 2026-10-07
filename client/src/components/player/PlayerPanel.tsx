@@ -17,8 +17,8 @@ interface PlayerPanelProps {
 export function PlayerPanel({ name, color, isActive, statusLabel, timeMs }: PlayerPanelProps) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-2 transition ${
-        isActive ? 'border-emerald-500/50 bg-emerald-600/10' : 'border-white/5 bg-slate-900/60'
+      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-2 text-slate-100 transition ${
+        isActive ? 'border-emerald-500/50 bg-emerald-900/50' : 'border-white/5 bg-slate-900/60'
       }`}
     >
       <div className="flex items-center gap-3">

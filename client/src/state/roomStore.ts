@@ -3,6 +3,11 @@ import type { GameState, PlayerColor } from '../types/chess'
 import type { ChatMessage, RoomPublicData } from '../types/room'
 import type { ClockInfo, JoinAckData } from '../types/socket'
 
+// Debug trên dev: đọc state phòng từ console (window.__roomStore.getState())
+if (import.meta.env.DEV) {
+  ;(window as unknown as { __roomStore?: unknown }).__roomStore = undefined
+}
+
 /** Ảnh chụp đồng hồ từ server kèm thời điểm nhận — client nội suy hiển thị */
 export interface ClockSnapshot {
   whiteMs: number
@@ -118,3 +123,7 @@ export const useRoomStore = create<RoomStore>()((set) => ({
     })
   },
 }))
+
+if (import.meta.env.DEV) {
+  ;(window as unknown as { __roomStore: typeof useRoomStore }).__roomStore = useRoomStore
+}

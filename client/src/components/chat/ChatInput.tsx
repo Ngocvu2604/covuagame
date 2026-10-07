@@ -34,7 +34,7 @@ export function ChatInput({ disabled = false, onSend }: ChatInputProps) {
         onChange={(event) => setText(event.target.value)}
         placeholder={t('chat.placeholder')}
         aria-label={t('chat.title')}
-        className="w-full min-w-0 rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-sm outline-none transition focus:border-emerald-500"
+        className="field-input min-w-0 px-3 py-1.5"
       />
       <Button type="submit" variant="secondary" disabled={disabled || !text.trim()}>
         {t('common.send')}

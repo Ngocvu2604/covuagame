@@ -14,10 +14,10 @@ import type { CreateAckData, JoinAckData } from '../types/socket'
 
 type ColorChoice = 'white' | 'black' | 'random'
 
-const COLOR_CHOICES: [ColorChoice, string, TranslationKey][] = [
-  ['white', '⚪', 'lobby.colorWhite'],
-  ['black', '⚫', 'lobby.colorBlack'],
-  ['random', '🎲', 'lobby.colorRandom'],
+const COLOR_CHOICES: [ColorChoice, TranslationKey][] = [
+  ['white', 'lobby.colorWhite'],
+  ['black', 'lobby.colorBlack'],
+  ['random', 'lobby.colorRandom'],
 ]
 
 /** Sảnh Online: tạo phòng mới hoặc tham gia phòng bằng mã */
@@ -100,7 +100,7 @@ export function OnlineLobbyPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-      <div className="flex w-full max-w-md flex-col gap-6 rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
+      <div className="flex w-full max-w-md flex-col gap-6 card p-6 shadow-2xl backdrop-blur">
         <GameHeader title={t('invite.title')} />
 
         {misconfigured && (
@@ -110,32 +110,31 @@ export function OnlineLobbyPage() {
         )}
 
         <section aria-label={t('lobby.yourName')} className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.yourName')}</p>
+          <p className="section-label">{t('lobby.yourName')}</p>
           <input
             value={name}
             maxLength={20}
             onChange={(event) => setName(event.target.value)}
             placeholder={t('lobby.namePlaceholder')}
-            className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none transition focus:border-emerald-500"
+            className="field-input"
           />
         </section>
 
         <section aria-label={t('lobby.createSection')} className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.createSection')}</p>
+          <p className="section-label">{t('lobby.createSection')}</p>
           <div className="grid grid-cols-3 gap-2">
-            {COLOR_CHOICES.map(([value, emoji, labelKey]) => (
+            {COLOR_CHOICES.map(([value, labelKey]) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setColorChoice(value)}
                 className={`flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 ${choiceButtonClass(colorChoice === value)}`}
               >
-                <span aria-hidden>{emoji}</span>
                 <span>{t(labelKey)}</span>
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs uppercase tracking-widest text-slate-500">{t('lobby.timeSection')}</p>
+          <p className="mt-2 section-label">{t('lobby.timeSection')}</p>
           <div className="grid grid-cols-5 gap-2">
             {TIME_CONTROL_OPTIONS.map((option) => (
               <button
@@ -158,7 +157,7 @@ export function OnlineLobbyPage() {
         </div>
 
         <section aria-label={t('lobby.joinSection')} className="flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-widest text-slate-500">{t('lobby.joinSection')}</p>
+          <p className="section-label">{t('lobby.joinSection')}</p>
           <input
             value={code}
             maxLength={6}
@@ -167,7 +166,7 @@ export function OnlineLobbyPage() {
               if (event.key === 'Enter') void handleJoin()
             }}
             aria-label={t('lobby.codeLabel')}
-            className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-3 text-center font-mono text-2xl tracking-[0.3em] uppercase outline-none transition focus:border-emerald-500"
+            className="field-input px-3 py-3 text-center font-mono text-2xl tracking-[0.3em] uppercase"
           />
           <Button variant="primary" size="lg" fullWidth disabled={busy} onClick={() => void handleJoin()}>
             {t('lobby.join')}

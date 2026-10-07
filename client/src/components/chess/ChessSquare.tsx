@@ -43,10 +43,12 @@ export function ChessSquare({
 }: ChessSquareProps) {
   const light = isLightSquare(square)
   const squareClass = light ? 'bg-[var(--sq-light)]' : 'bg-[var(--sq-dark)]'
+  // Hai pha vân gỗ xen kẽ theo màu ô để bề mặt tự nhiên hơn
+  const grainClass = light ? 'square-wood' : 'square-wood-alt'
   const slideStyle: CSSProperties | undefined = slideFrom
     ? ({ '--slide-x': `${slideFrom.x}%`, '--slide-y': `${slideFrom.y}%` } as CSSProperties)
     : undefined
-  const labelColor = light ? 'text-black/45' : 'text-white/60'
+  const labelColor = light ? 'text-[#7a5a33]/80' : 'text-[#f5e9cd]/75'
 
   return (
     <button
@@ -56,17 +58,15 @@ export function ChessSquare({
       onMouseEnter={() => {
         if (piece && interactive) onPieceHover?.()
       }}
-      className={`group relative flex items-center justify-center ${squareClass} focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 ${
+      className={`group relative flex items-center justify-center ${squareClass} ${grainClass} focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#f5e9cd] ${
         interactive && piece ? 'square-interactive' : ''
       }`}
     >
       {isLastMove && (
-        <span className="pointer-events-none absolute inset-0 animate-[fade-in_120ms_ease-out] bg-amber-300/45" />
+        <span className="pointer-events-none absolute inset-0 animate-[fade-in_120ms_ease-out] bg-[#e3c56b]/45" />
       )}
-      {isCheck && <span className="pointer-events-none absolute inset-0 animate-pulse bg-red-500/60" />}
-      {isSelected && (
-        <span className="pointer-events-none absolute inset-0 animate-[fade-in_100ms_ease-out] bg-emerald-400/55" />
-      )}
+      {isCheck && <span className="pointer-events-none absolute inset-0 bg-[#c65b4e]/50" />}
+      {isSelected && <span className="square-selected pointer-events-none absolute inset-0" />}
       {captureKey && isLastMove && (
         <span key={captureKey} className="capture-ring pointer-events-none absolute inset-0" />
       )}
@@ -93,7 +93,7 @@ export function ChessSquare({
         <span
           key={`${piece.color}-${piece.type}`}
           style={slideStyle}
-          className={`flex ${slideFrom ? 'piece-slide' : ''} ${isCheck ? 'piece-shake' : ''}`}
+          className={`relative z-10 flex ${slideFrom ? 'piece-slide' : ''} ${isCheck ? 'piece-shake' : ''}`}
         >
           <ChessPiece
             type={piece.type}

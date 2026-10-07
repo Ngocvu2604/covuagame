@@ -26,9 +26,9 @@ export function MoveHistory({ moves }: MoveHistoryProps) {
   return (
     <section
       aria-label={t('history.title')}
-      className="overflow-hidden rounded-xl border border-white/5 bg-slate-900/60"
+      className="overflow-hidden card"
     >
-      <p className="border-b border-white/5 px-4 py-2 text-xs uppercase tracking-widest text-slate-500">
+      <p className="section-label border-b border-white/5 px-4 py-2">
         {t('history.title')}
       </p>
       <div ref={containerRef} className="max-h-64 overflow-y-auto py-1">

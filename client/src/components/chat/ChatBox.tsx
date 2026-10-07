@@ -25,9 +25,9 @@ export function ChatBox({ messages, yourColor, disabled = false, onSend }: ChatB
   return (
     <section
       aria-label={t('chat.title')}
-      className="flex flex-col rounded-xl border border-white/5 bg-slate-900/60"
+      className="flex flex-col card"
     >
-      <p className="border-b border-white/5 px-4 py-2 text-xs uppercase tracking-widest text-slate-500">
+      <p className="section-label border-b border-white/5 px-4 py-2">
         {t('chat.title')}
       </p>
       <div ref={containerRef} className="flex max-h-44 min-h-24 flex-col gap-1.5 overflow-y-auto p-3">

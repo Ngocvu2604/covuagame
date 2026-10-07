@@ -28,11 +28,11 @@ export function SettingsPage() {
 
   return (
     <main className="min-h-screen px-4 py-8">
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-6 rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-6 card p-6 shadow-2xl backdrop-blur">
         <GameHeader title={t('home.settings')} />
 
         <section className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{t('settings.player')}</p>
+          <p className="section-label">{t('settings.player')}</p>
           <div className="flex gap-2">
             <input
               value={nameDraft}
@@ -43,7 +43,7 @@ export function SettingsPage() {
                 if (event.key === 'Enter') commitName()
               }}
               placeholder={t('settings.namePlaceholder')}
-              className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm outline-none transition focus:border-emerald-500"
+              className="field-input"
             />
             <Button variant="primary" onClick={commitName}>
               {t('common.save')}

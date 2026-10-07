@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import type { Language } from '../../types/chess'
 import { BOARD_THEME_LIST } from '../../constants/chess'
 import { DIFFICULTY_OPTIONS } from '../../constants/difficulty'
 import { PIECE_SET_LIST } from '../../constants/pieceSets'
@@ -16,14 +15,14 @@ import { useT } from '../../i18n/translations'
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2.5">
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{title}</p>
+      <p className="section-label">{title}</p>
       {children}
     </section>
   )
 }
 
 function Group({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-1 rounded-xl border border-white/5 bg-slate-800/40 px-3 py-2">{children}</div>
+  return <div className="flex flex-col gap-1 rounded-lg border border-white/5 bg-slate-800/40 px-3 py-2">{children}</div>
 }
 
 function Toggle({
@@ -93,55 +92,25 @@ function SelectField<T extends string>({
   )
 }
 
-function Segmented<T extends string>({
-  value,
-  options,
-  onChange,
-  ariaLabel,
-}: {
-  value: T
-  options: { value: T; label: string }[]
-  onChange: (value: T) => void
-  ariaLabel: string
-}) {
-  return (
-    <div role="group" aria-label={ariaLabel} className="grid grid-cols-3 gap-2">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={`rounded-lg border px-2 py-2 text-xs font-medium transition sm:text-sm ${
-            value === option.value
-              ? 'border-emerald-500 bg-emerald-600/15 text-emerald-200'
-              : 'border-white/10 bg-slate-800/60 text-slate-300 hover:bg-slate-800'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export function SettingsContent() {
   const t = useT()
   const settings = useSettingsStore()
 
   return (
     <div className="flex flex-col gap-5">
-      {/* NGÔN NGỮ — đầu tiên để người mới tìm được */}
+      {/* NGÔN NGỮ — đầu tiên để người mới tìm được; tên ngôn ngữ giữ nguyên bản gốc cho dễ nhận biết */}
       <Section title={t('settings.language')}>
-        <Segmented<Language>
-          ariaLabel={t('settings.language')}
-          value={settings.language}
-          onChange={settings.setLanguage}
-          options={[
-            { value: 'vi', label: t('settings.langVi') },
-            { value: 'en', label: t('settings.langEn') },
-          ]}
-        />
+        <Group>
+          <SelectField
+            label={t('settings.languageSelect')}
+            value={settings.language}
+            onChange={settings.setLanguage}
+            options={[
+              { value: 'vi', label: 'Tiếng Việt' },
+              { value: 'en', label: 'English' },
+            ]}
+          />
+        </Group>
       </Section>
 
       <Section title={t('settings.appearance')}>
@@ -189,7 +158,7 @@ export function SettingsContent() {
             onChange={settings.setMusicEnabled}
           />
           <div className="flex items-center gap-3 py-1">
-            <span className="w-14 shrink-0 text-sm text-slate-200">{t('settings.volume')}</span>
+            <span className="w-16 shrink-0 text-sm text-slate-200">{t('settings.volume')}</span>
             <input
               type="range"
               min={0}
@@ -240,7 +209,7 @@ export function SettingsContent() {
           onChange={settings.setDefaultDifficulty}
           options={DIFFICULTY_OPTIONS.map((option) => ({
             value: option.id,
-            label: `${option.emoji} ${t(option.nameKey)}`,
+            label: t(option.nameKey),
           }))}
         />
       </Section>

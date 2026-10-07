@@ -20,3 +20,6 @@ Thumbs.db
 # Cho phép commit file mẫu env
 !.env.example
 !.env*.example
+
+# Phiên REST của script đo kiểm (chứa cookie session)
+scripts/.test-opponent-cookie

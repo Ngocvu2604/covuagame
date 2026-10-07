@@ -7,6 +7,8 @@ import { pushToast } from '../state/uiStore'
 import { usePlayerStore } from '../state/playerStore'
 import { useSettingsStore } from '../state/settingsStore'
 import { getT } from '../i18n/translations'
+import { Chess } from 'chess.js'
+import { deriveGameState, historyRecordsOf } from '../online/appwrite/stateReplay'
 import {
   sendChat,
   sendDrawAccept,
@@ -139,20 +141,41 @@ export function useOnlineGame() {
   // Chế độ 'drag': click không đi — chỉ kéo-thả mới gửi nước
   const moveMode = useSettingsStore((s) => s.moveMode)
 
-  const submitMove = useCallback(
-    async (from: SquareName, to: SquareName, promotion?: PieceType) => {
-      setLastMoveError(null)
+  const submitMove = useCallback((from: SquareName, to: SquareName, promotion?: PieceType) => {
+    setLastMoveError(null)
+    const store = useRoomStore.getState()
+    const current = store.gameState
+    if (!current || current.result) return
+
+    // Optimistic: áp nước đi cục bộ NGAY để UI phản hồi tức thì; realtime/ack
+    // sẽ chốt lại state chính thức (giống hệt) — nếu bị từ chối thì hoàn tác.
+    const probe = new Chess(current.fen)
+    const applied = probe.move({ from, to, promotion: promotion ? promotion.toLowerCase() : undefined })
+    if (!applied) return
+    const prev = current
+    const optimisticState = deriveGameState(probe, historyRecordsOf(probe))
+    store.setGameState(optimisticState)
+
+    void (async () => {
       const ack = await sendMove({
         from,
         to,
         promotion: promotion ? toPieceSymbol(promotion) : undefined,
       })
       if (!ack.ok) {
+        const live = useRoomStore.getState()
+        // hoàn tác chỉ khi chưa có state chính thức mới đến (realtime echo)
+        if (live.gameState === optimisticState) {
+          live.setGameState(prev)
+        }
         setLastMoveError(ack.error ?? 'Nước đi bị từ chối')
+      } else if (ack.state) {
+        // ack chính thức — chốt state (đồng bộ với optimistic đã áp)
+        useRoomStore.getState().setGameState(ack.state)
+        if (ack.clock) useRoomStore.getState().setClock(ack.clock, Date.now())
       }
-    },
-    [],
-  )
+    })()
+  }, [])
 
   /** Kéo-thả: thả quân vào ô đích (bàn đã được chọn khi dragstart) */
   const tryMoveTo = useCallback(

@@ -81,6 +81,19 @@ export function replayMoves(moves: MoveDocument[], room: RoomDocument): ReplayRe
   return { state: deriveGameState(game, moveHistory), skippedCount }
 }
 
+/** Chuyển history verbose của chess.js thành MoveRecord[] (dùng chung cho replay + optimistic) */
+export function historyRecordsOf(game: Chess): MoveRecord[] {
+  return game.history({ verbose: true }).map((entry) => ({
+    san: entry.san,
+    from: entry.from as SquareName,
+    to: entry.to as SquareName,
+    color: toPlayerColor(entry.color),
+    piece: toPieceType(entry.piece),
+    captured: entry.captured ? toPieceType(entry.captured) : null,
+    promotion: entry.promotion ? toPieceType(entry.promotion) : null,
+  }))
+}
+
 /** Tổng hợp trạng thái bàn cờ từ một instance chess.js đã replay */
 export function deriveGameState(game: Chess, moveHistory: MoveRecord[]): GameState {
   const pieces: { square: SquareName; type: PieceType; color: PlayerColor }[] = []

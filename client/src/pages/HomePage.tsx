@@ -8,30 +8,19 @@ export function HomePage() {
   const t = useT()
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-8 text-slate-100">
-      <div className="flex flex-col items-center gap-10 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-8 text-slate-100">
+      <div className="flex flex-col items-center gap-8 text-center">
         <header>
-          <span
-            aria-hidden
-            className="select-none text-7xl leading-none text-emerald-400 drop-shadow-[0_0_18px_rgba(16,185,129,0.45)]"
-          >
+          <span aria-hidden className="select-none text-6xl leading-none text-[#d9c9a4]">
             ♞
           </span>
-          <h1 className="app-chrome-title mt-6 bg-gradient-to-b from-white via-white to-slate-400 bg-clip-text text-4xl font-bold tracking-[0.2em] text-transparent sm:text-5xl">
-            CHESS ARENA
+          <h1 className="mt-3 text-4xl font-extrabold tracking-[0.08em] text-slate-100 sm:text-6xl sm:tracking-[0.1em]">
+            {t('home.title')}
           </h1>
-          <p className="app-chrome-muted mt-4 text-base">Play Chess. Have Fun.</p>
-          <div
-            aria-hidden
-            className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] uppercase tracking-widest text-slate-500"
-          >
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">🤖 AI Offline</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">🌐 Realtime</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">♪ Ambient</span>
-          </div>
+          <p className="app-chrome-muted mt-3 text-base">{t('home.tagline')}</p>
         </header>
 
-        <nav aria-label="Chọn chế độ chơi" className="flex w-72 flex-col gap-3">
+        <nav aria-label="Chọn chế độ chơi" className="flex w-80 max-w-full flex-col gap-2.5">
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/offline')}>
             {t('home.playVsAi')}
           </Button>
@@ -43,7 +32,7 @@ export function HomePage() {
           </Button>
         </nav>
 
-        <p className="app-chrome-muted text-xs text-slate-600">{t('home.offlineNote')}</p>
+        <p className="app-chrome-muted max-w-80 text-xs leading-relaxed">{t('home.offlineNote')}</p>
       </div>
     </main>
   )

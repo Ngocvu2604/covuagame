@@ -9,6 +9,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { useSound } from './hooks/useSound'
 import { useSettingsStore } from './state/settingsStore'
 import { ToastHost } from './components/common/Toast'
+import { ensureAnonymousSession, isAppwriteConfigured } from './online/appwrite/client'
 
 /** Định tuyến SPA. Dùng HashRouter + base './' để bản build mở được
  * trực tiếp từ file:// — phục vụ yêu cầu chơi offline (mục 17). */
@@ -23,6 +24,12 @@ export default function App() {
     root.classList.toggle('display-dim', displayMode === 'dim')
     root.classList.toggle('display-light', displayMode === 'light')
   }, [displayMode])
+
+  // Làm ấm Anonymous Session ngay khi mở app (nền) — tạo/vào phòng sau đó
+  // không phải chờ account.get (~1-3s trên mạng chậm) trong nhấn nút.
+  useEffect(() => {
+    if (isAppwriteConfigured()) void ensureAnonymousSession()
+  }, [])
 
   return (
     <HashRouter>

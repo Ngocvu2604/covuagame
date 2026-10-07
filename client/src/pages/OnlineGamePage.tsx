@@ -114,8 +114,8 @@ export function OnlineGamePage() {
   if (room.status === 'waiting') {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-        <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
-          <h2 className="text-xl font-bold">{t('wait.title')}</h2>
+        <div className="flex w-full max-w-md flex-col items-center gap-5 card p-8 text-center shadow-2xl backdrop-blur">
+          <h2 className="text-lg font-bold">{t('wait.title')}</h2>
           <p className="text-sm text-slate-400">{t('wait.share')}</p>
           <RoomCode code={room.code} />
           <CopyInviteLinkButton code={room.code} />
@@ -147,12 +147,12 @@ export function OnlineGamePage() {
       : null
 
   return (
-    <main className="min-h-screen px-4 py-6 text-slate-100">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <main className="min-h-dvh px-4 py-4 text-slate-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3">
         <GameHeader title={`Chơi Online · ${room.code}`} onOpenSettings={() => setSettingsOpen(true)} />
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,640px)_20rem] lg:justify-center">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-2">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,720px)_20rem] lg:justify-center">
+          <div className="mx-auto flex w-full max-w-[min(720px,max(288px,calc(100dvh_-_240px)))] flex-col gap-2">
             <PlayerPanel
               name={opponentInfo?.name ?? 'Đối thủ'}
               color={opponentColor}
@@ -194,12 +194,12 @@ export function OnlineGamePage() {
             />
           </div>
 
-          <aside className="mx-auto flex w-full max-w-[640px] flex-col gap-3 lg:mx-0 lg:w-full">
+          <aside className="mx-auto flex w-full max-w-[720px] flex-col gap-3 lg:mx-0 lg:w-full">
             <MoveHistory moves={gameState?.moveHistory ?? []} />
 
             <section
               aria-label="Điều khiển ván đấu"
-              className="flex flex-col gap-2 rounded-xl border border-white/5 bg-slate-900/60 p-3"
+              className="flex flex-col gap-2 card p-3"
             >
               <DrawButton
                 visible={room.status === 'playing' && gameState?.result === null}

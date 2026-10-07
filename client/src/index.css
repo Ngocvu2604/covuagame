@@ -4,61 +4,82 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Bảng màu chủ đạo của Chess Arena */
-  --color-accent: #10b981;
-  --color-danger: #ef4444;
-  --color-gold: #f59e0b;
+  /* Quy chuẩn màu Chess Arena: nền tối trung tính ấm + xanh lá làm màu nhấn.
+     Ghi đè thang emerald/slate để toàn bộ UI đồng bộ mà không phải sửa từng lớp. */
+  --color-accent: #5d9948;
+  --color-danger: #c65b4e;
+  --color-gold: #c99b4a;
+
+  /* Xanh lá nhấn (nút chính, trạng thái tích cực) */
+  --color-emerald-50: #f2f7ec;
+  --color-emerald-100: #e3efd4;
+  --color-emerald-200: #c8e0a8;
+  --color-emerald-300: #a5cc74;
+  --color-emerald-400: #85b64c;
+  --color-emerald-500: #6fa03c;
+  --color-emerald-600: #5a8430;
+  --color-emerald-700: #4a6b28;
+  --color-emerald-800: #3d5722;
+  --color-emerald-900: #34491e;
+
+  --color-red-400: #d98177;
+  --color-red-500: #c65b4e;
+  --color-red-600: #ab4a3f;
+
+  /* Trung tính ấm (nền panel, chữ) — không ám xanh */
+  --color-slate-50: #f6f4f2;
+  --color-slate-100: #ebe8e5;
+  --color-slate-200: #d9d5d1;
+  --color-slate-300: #bdb8b3;
+  --color-slate-400: #9b958f;
+  --color-slate-500: #746e69;
+  --color-slate-600: #58534f;
+  --color-slate-700: #454140;
+  --color-slate-800: #353231;
+  --color-slate-900: #2a2726;
+  --color-slate-950: #211f1e;
 }
 
-/* ===== Background của app (mục 7) ===== */
+/* ===== Background của app — tối dịu trung tính, không gradient ===== */
 body {
   min-height: 100vh;
-  color: #e2e8f0;
-  background:
-    radial-gradient(1100px 700px at 85% -10%, rgba(16, 185, 129, 0.08), transparent 60%),
-    radial-gradient(900px 650px at -5% 110%, rgba(59, 130, 246, 0.07), transparent 55%),
-    #020617;
+  color: #ebe8e5;
+  background: #262422;
 }
 
-/* Họa tiết bàn cờ rất nhẹ phủ lên nền */
+/* Họa tiết vân rất nhẹ phủ lên nền, tạo chất liệu tự nhiên */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
-  background-image: conic-gradient(
-    rgba(148, 163, 184, 0.05) 90deg,
-    transparent 90deg 180deg,
-    rgba(148, 163, 184, 0.05) 180deg 270deg,
-    transparent 270deg
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    112deg,
+    rgba(255, 255, 255, 0.016) 0px,
+    rgba(255, 255, 255, 0.016) 2px,
+    transparent 2px 9px
   );
-  background-size: 96px 96px;
 }
 
 /* Chế độ hiển thị: Dịu nhẹ (dim) — nền phẳng, tương phản thấp hơn */
 html.display-dim body {
-  background:
-    radial-gradient(1000px 700px at 85% -10%, rgba(16, 185, 129, 0.05), transparent 60%),
-    #0c1220;
+  background: #1c1a19;
 }
 
 /* Chế độ hiển thị: Sáng (light) — nền chrome sáng, panel game giữ tối */
 html.display-light body {
-  color: #0f172a;
-  background:
-    radial-gradient(1100px 700px at 85% -10%, rgba(16, 185, 129, 0.1), transparent 60%),
-    radial-gradient(900px 650px at -5% 110%, rgba(59, 130, 246, 0.08), transparent 55%),
-    #e9edf3;
+  color: #26221f;
+  background: #e9e6e2;
 }
 html.display-light body::before {
-  opacity: 0.5;
-  background-image: conic-gradient(
-    rgba(15, 23, 42, 0.04) 90deg,
-    transparent 90deg 180deg,
-    rgba(15, 23, 42, 0.04) 180deg 270deg,
-    transparent 270deg
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(
+    112deg,
+    rgba(38, 34, 30, 0.02) 0px,
+    rgba(38, 34, 30, 0.02) 2px,
+    transparent 2px 9px
   );
 }
 html.display-light .app-chrome-title {
@@ -66,6 +87,96 @@ html.display-light .app-chrome-title {
 }
 html.display-light .app-chrome-muted {
   color: #475569;
+}
+
+/* ===== Quy chuẩn thành phần dùng chung ===== */
+
+/* Thẻ/panel: nền tối nhẹ, viền mảnh, bo góc nhỏ thống nhất */
+.card {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(33, 31, 30, 0.72);
+}
+html.display-light .card {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* Nhãn nhóm/section: chữ nhỏ hoa, giãn cách — dùng đồng bộ toàn app */
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9b958f;
+}
+
+/* Ô nhập liệu thống nhất */
+.field-input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(53, 50, 49, 0.7);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  color: #ebe8e5;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+.field-input:focus {
+  border-color: #85b64c;
+}
+.field-input::placeholder {
+  color: #746e69;
+}
+
+/* ===== Bề mặt bàn cờ gỗ ===== */
+
+/* Khung gỗ quanh bàn: nút ấm, vát sáng trên / tối dưới tạo chiều dày */
+.board-frame {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.22)),
+    #5d452b;
+  box-shadow:
+    0 10px 26px -12px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 235, 200, 0.14);
+}
+
+/* Vân gỗ tinh tế trên từng ô — 2 pha lệch nhau cho tự nhiên */
+.square-wood {
+  background-image:
+    repeating-linear-gradient(
+      94deg,
+      rgba(105, 70, 35, 0.055) 0px,
+      rgba(105, 70, 35, 0.055) 1.5px,
+      transparent 1.5px,
+      transparent 7px
+    ),
+    linear-gradient(118deg, rgba(255, 255, 255, 0.06), rgba(60, 35, 12, 0.05));
+}
+.square-wood-alt {
+  background-image:
+    repeating-linear-gradient(
+      86deg,
+      rgba(105, 70, 35, 0.05) 0px,
+      rgba(105, 70, 35, 0.05) 1.5px,
+      transparent 1.5px,
+      transparent 8px
+    ),
+    linear-gradient(62deg, rgba(255, 255, 255, 0.05), rgba(60, 35, 12, 0.06));
+}
+
+/* Ô được chọn: viền trong kem + làm sáng nhẹ (thay cho phủ màu đậm) */
+.square-selected {
+  box-shadow:
+    inset 0 0 0 3px rgba(248, 238, 212, 0.95),
+    inset 0 0 0 5px rgba(60, 40, 18, 0.25);
+}
+.square-selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 244, 214, 0.14);
 }
 
 /* ===== Animations (mục 15 — chỉ dùng transform/opacity cho mượt) ===== */
@@ -102,7 +213,7 @@ html.display-light .app-chrome-muted {
 }
 
 .capture-ring {
-  border: 3px solid rgba(239, 68, 68, 0.75);
+  border: 3px solid rgba(198, 91, 78, 0.8);
   border-radius: 6px;
   animation: capture-ring 340ms ease-out forwards;
 }
@@ -165,6 +276,7 @@ html.display-light .app-chrome-muted {
 .animations-off .piece-slide,
 .animations-off .capture-ring,
 .animations-off .piece-shake,
+.animations-off .drag-wobble,
 .animations-off [class*="animate-"] {
   animation: none !important;
 }
@@ -172,7 +284,8 @@ html.display-light .app-chrome-muted {
 @media (prefers-reduced-motion: reduce) {
   .piece-slide,
   .capture-ring,
-  .piece-shake {
+  .piece-shake,
+  .drag-wobble {
     animation: none !important;
   }
 }

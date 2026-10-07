@@ -121,20 +121,32 @@ export async function joinAppwriteRoom(playerName: string, code: string): Promis
     return { ok: false, error: 'ROOM_FULL' }
   }
 
-  const doc = await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, roomDoc.$id, {
-    blackPlayerId: userId,
-    blackPlayerName: playerName,
-    status: 'playing',
-    turnStartedAt: Date.now(),
-    whiteLastSeenAt: Date.now(),
-    blackLastSeenAt: Date.now(),
-  })
-  return finishJoin(doc as unknown as RoomDocument, 'black')
+  // Vào ghế trống: ghi ghế + lấy move log SONG SONG (tiết kiệm 1 round-trip)
+  const [moves, updated] = await Promise.all([
+    fetchRoomMoves(roomDoc),
+    databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, roomDoc.$id, {
+      blackPlayerId: userId,
+      blackPlayerName: playerName,
+      status: 'playing',
+      turnStartedAt: Date.now(),
+      whiteLastSeenAt: Date.now(),
+      blackLastSeenAt: Date.now(),
+    }),
+  ])
+  const joinedDoc = updated as unknown as RoomDocument
+  const { state, clock } = stateFromMoves(joinedDoc, moves)
+  return { ok: true, room: toRoomPublicData(joinedDoc), color: 'black', state, clock }
 }
 
 async function finishJoin(roomDoc: RoomDocument, color: PlayerColor): Promise<JoinAckData> {
   const { state, clock } = await fetchRoomState(roomDoc)
   return { ok: true, room: toRoomPublicData(roomDoc), color, state, clock }
+}
+
+/** Move log đã fetch sẵn (từ join song song) → dựng trạng thái không cần request nữa */
+function stateFromMoves(roomDoc: RoomDocument, moves: MoveDocument[]) {
+  const { state } = replayMoves(moves, roomDoc)
+  return { state, clock: clockFromDoc(roomDoc) }
 }
 
 /** Lấy toàn bộ nước đi của ván hiện tại (đúng thứ tự ply) */

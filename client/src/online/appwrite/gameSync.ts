@@ -41,6 +41,12 @@ const PRESENCE_INTERVAL_MS = 10_000
 const ABANDON_AFTER_MS = 30_000
 /** Khoảng nghỉ tối thiểu giữa 2 lần touch presence qua realtime events */
 const PRESENCE_TOUCH_THROTTLE_MS = 8_000
+/**
+ * State cục bộ được coi là tươi khi còn nhận realtime event. Quá hạn này
+ * (socket đứt/tab nền quá lâu) → sendMove phải refetch trước khi validate,
+ * vì có thể đã miss nước đi của đối thủ.
+ */
+const REALTIME_FRESH_MS = 15_000
 
 function colorOfUser(userId: string, doc: RoomDocument): PlayerColor | null {
   if (userId === doc.whitePlayerId) return 'white'
@@ -67,6 +73,7 @@ class AppwriteSync implements GameSyncProvider {
   private gameOverHandledGame = -1
   private starting = false
   private lastPresenceTouch = 0
+  private lastRealtimeEventAt = 0
   private waitTimer: number | null = null
 
   subscribe(handlers: GameSyncHandlers): () => void {
@@ -110,6 +117,7 @@ class AppwriteSync implements GameSyncProvider {
     this.handlers = null
     this.starting = false
     this.roomDoc = null
+    this.lastRealtimeEventAt = 0
     this.moveDocs.clear()
     this.liveChess = new Chess()
     this.emittedMessageIds.clear()
@@ -136,11 +144,13 @@ class AppwriteSync implements GameSyncProvider {
           clock: clockFromDoc(doc),
         })
       }
-      // Phòng đã kết thúc trước đó (reload giữa/khi sau ván) → phát lại kết quả
+      // Phòng đã kết thúc trước đó (reload giữa/khi sau ván) → phát lại kết quả.
+      // Result của các lý do ngoài bàn cờ (đầu hàng/bỏ cuộc/hòa thoả thuận) chỉ
+      // nằm ở room doc — replay không suy ra được → phải trộn vào state.
       if (doc.status === 'finished') {
         const result = docResult(doc)
         if (result) {
-          this.handlers?.onGameOver({ result, state: this.buildState(), clock: clockFromDoc(doc) })
+          this.handlers?.onGameOver({ result, state: { ...this.buildState(), result }, clock: clockFromDoc(doc) })
         }
       }
 
@@ -150,16 +160,19 @@ class AppwriteSync implements GameSyncProvider {
 
       this.unsubscribes.push(
         client.subscribe(roomChannel, (response) => {
+          this.lastRealtimeEventAt = Date.now()
           void this.touchPresence()
           this.onRoomDocChanged(response.payload as RoomDocument)
         }),
         client.subscribe(movesChannel, (response) => {
+          this.lastRealtimeEventAt = Date.now()
           void this.touchPresence()
           const payload = response.payload as MoveDocument
           if (payload.roomId !== roomId) return
           this.onMoveDocArrived(payload)
         }),
         client.subscribe(messagesChannel, (response) => {
+          this.lastRealtimeEventAt = Date.now()
           void this.touchPresence()
           const payload = response.payload as MessageDocument
           if (payload.roomId !== roomId) return
@@ -209,13 +222,13 @@ class AppwriteSync implements GameSyncProvider {
       return
     }
 
-    // Kết thúc ván (status đổi sang finished) → phát game over
+    // Kết thúc ván (status đổi sang finished) → phát game over (trộn result từ doc)
     if (prev && prev.status !== 'finished' && doc.status === 'finished') {
       const result = docResult(doc)
       if (result && this.gameOverHandledGame !== doc.gameNumber) {
         this.gameOverHandledGame = doc.gameNumber
         this.rebuildLive()
-        this.handlers?.onGameOver({ result, state: this.buildState(), clock: clockFromDoc(doc) })
+        this.handlers?.onGameOver({ result, state: { ...this.buildState(), result }, clock: clockFromDoc(doc) })
       }
     }
 
@@ -279,34 +292,63 @@ class AppwriteSync implements GameSyncProvider {
     const userId = await this.withUserId()
     if (!this.roomDoc) return { ok: false, error: 'GAME_NOT_ACTIVE' }
 
-    // Tự chữa lành: refetch room doc + move log TƯƠI từ Appwrite trước khi
-    // validate — realtime có thể miss event khi tab nền, state cục bộ stale
-    // sẽ khiến nước đi hợp lệ bị từ chối nhầm (NOT_YOUR_TURN).
-    const freshDoc = (await databases.getDocument(
-      DATABASE_ID,
-      ROOMS_COLLECTION_ID,
-      this.roomDoc.$id,
-    )) as unknown as RoomDocument
-    const freshMoves = await fetchRoomMoves(freshDoc)
-    for (const move of freshMoves) this.moveDocs.set(move.$id, move)
+    // Fast path: validate trên state cục bộ mà realtime + heartbeat luôn giữ
+    // tươi → 2 request ghi thay vì 4 (refetch chẩn đoán chỉ chạy khi realtime
+    // đã cũ hoặc phát hiện lệch lượt — ví dụ tab nền miss realtime).
+    let docToUse = this.roomDoc
+    for (let attempt = 0; ; attempt++) {
+      if (attempt === 0 && Date.now() - this.lastRealtimeEventAt > REALTIME_FRESH_MS) {
+        // Realtime đã cũ (socket đứt/quá lâu không event) → không tin state
+        // cục bộ: refetch một lần trước khi validate.
+        const freshDoc = (await databases.getDocument(
+          DATABASE_ID,
+          ROOMS_COLLECTION_ID,
+          docToUse.$id,
+        )) as unknown as RoomDocument
+        const freshMoves = await fetchRoomMoves(freshDoc)
+        for (const move of freshMoves) this.moveDocs.set(move.$id, move)
+        this.setRoomDoc(freshDoc)
+        docToUse = freshDoc
+        this.lastRealtimeEventAt = Date.now()
+      }
+      if (docToUse.status !== 'playing') return { ok: false, error: 'GAME_NOT_ACTIVE' }
+      const myColor = colorOfUser(userId, docToUse)
+      if (!myColor) return { ok: false, error: 'NOT_IN_ROOM' }
 
-    if (freshDoc.status !== 'playing') return { ok: false, error: 'GAME_NOT_ACTIVE' }
+      const state = this.rebuildLive()
+      if (state.turn === myColor) {
+        const legal = findLegalMove(
+          this.liveChess,
+          payload.from as SquareName,
+          payload.to as SquareName,
+          payload.promotion as PieceType | undefined,
+        )
+        if (legal) break
+        return { ok: false, error: 'INVALID_MOVE' }
+      }
 
-    const myColor = colorOfUser(userId, freshDoc)
+      // Lệch lượt: state cục bộ có thể stale → tự chữa lành MỘT lần rồi thử lại
+      if (attempt > 0) return { ok: false, error: 'NOT_YOUR_TURN' }
+      const freshDoc = (await databases.getDocument(
+        DATABASE_ID,
+        ROOMS_COLLECTION_ID,
+        docToUse.$id,
+      )) as unknown as RoomDocument
+      const freshMoves = await fetchRoomMoves(freshDoc)
+      for (const move of freshMoves) this.moveDocs.set(move.$id, move)
+      this.setRoomDoc(freshDoc)
+      docToUse = freshDoc
+    }
+
+    const doc = docToUse
+    const myColor = colorOfUser(userId, doc)
     if (!myColor) return { ok: false, error: 'NOT_IN_ROOM' }
 
-    // Rebuild bàn cờ đã kiểm định từ move log tươi — nguồn sự thật duy nhất
-    const state = this.rebuildLive()
-    if (state.turn !== myColor) return { ok: false, error: 'NOT_YOUR_TURN' }
-
-    const legal = findLegalMove(this.liveChess, payload.from as SquareName, payload.to as SquareName, payload.promotion as PieceType | undefined)
-    if (!legal) return { ok: false, error: 'INVALID_MOVE' }
-
     const now = Date.now()
-    let whiteMs = freshDoc.whiteMs
-    let blackMs = freshDoc.blackMs
-    if (freshDoc.timeMinutes > 0 && freshDoc.turnStartedAt > 0) {
-      const elapsed = now - freshDoc.turnStartedAt
+    let whiteMs = doc.whiteMs
+    let blackMs = doc.blackMs
+    if (doc.timeMinutes > 0 && doc.turnStartedAt > 0) {
+      const elapsed = now - doc.turnStartedAt
       if (myColor === 'white') whiteMs = Math.max(0, whiteMs - elapsed)
       else blackMs = Math.max(0, blackMs - elapsed)
     }
@@ -317,8 +359,8 @@ class AppwriteSync implements GameSyncProvider {
       MOVES_COLLECTION_ID,
       ID.unique(),
       {
-        roomId: freshDoc.$id,
-        gameNumber: freshDoc.gameNumber,
+        roomId: doc.$id,
+        gameNumber: doc.gameNumber,
         ply,
         userId,
         color: myColor,
@@ -362,9 +404,9 @@ class AppwriteSync implements GameSyncProvider {
         update.resultReason = derived.reason
       }
     }
-    await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, freshDoc.$id, update)
+    await databases.updateDocument(DATABASE_ID, ROOMS_COLLECTION_ID, doc.$id, update)
 
-    const updatedDoc: RoomDocument = { ...freshDoc, whiteMs, blackMs, turn: nextTurn, turnStartedAt: now }
+    const updatedDoc: RoomDocument = { ...doc, whiteMs, blackMs, turn: nextTurn, turnStartedAt: now }
     const finalState = deriveGameState(this.liveChess, this.historyOf(this.liveChess))
     const clock: ClockInfo | null = clockFromDoc(updatedDoc)
     return { ok: true, move: moveRecord, state: finalState, clock }

@@ -123,14 +123,14 @@ export function OfflineGamePage() {
   if (phase === 'setup') {
     return (
       <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur">
-          <h2 className="text-center text-xl font-bold">{t('setup.title')}</h2>
+        <div className="w-full max-w-md card p-6 shadow-2xl backdrop-blur">
+          <h2 className="text-center text-lg font-bold">{t('setup.title')}</h2>
           <p className="mt-1 text-center text-sm text-slate-400">
             {t('setup.subtitle')}
           </p>
 
           <section aria-label={t('setup.difficulty')} className="mt-6">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.difficulty')}</p>
+            <p className="mb-2 section-label">{t('setup.difficulty')}</p>
             <div className="flex flex-col gap-2">
               {DIFFICULTY_OPTIONS.map((option) => (
                 <button
@@ -143,9 +143,6 @@ export function OfflineGamePage() {
                       : 'border-white/10 bg-slate-800/60 hover:bg-slate-800'
                   }`}
                 >
-                  <span aria-hidden className="text-lg">
-                    {option.emoji}
-                  </span>
                   <span>
                     <span className="block text-sm font-semibold">{t(option.nameKey)}</span>
                     <span className="block text-xs text-slate-400">{t(option.descKey)}</span>
@@ -156,22 +153,21 @@ export function OfflineGamePage() {
           </section>
 
           <section aria-label={t('setup.colorSection')} className="mt-5">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.colorSection')}</p>
+            <p className="mb-2 section-label">{t('setup.colorSection')}</p>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ['white', '⚪', 'setup.colorWhite'],
-                  ['black', '⚫', 'setup.colorBlack'],
-                  ['random', '🎲', 'setup.colorRandom'],
+                  ['white', 'setup.colorWhite'],
+                  ['black', 'setup.colorBlack'],
+                  ['random', 'setup.colorRandom'],
                 ] as const
-              ).map(([value, emoji, labelKey]) => (
+              ).map(([value, labelKey]) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setSetup((s) => ({ ...s, colorChoice: value }))}
                   className={`flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-2 ${choiceButtonClass(setup.colorChoice === value)}`}
                 >
-                  <span aria-hidden>{emoji}</span>
                   <span>{t(labelKey)}</span>
                 </button>
               ))}
@@ -179,7 +175,7 @@ export function OfflineGamePage() {
           </section>
 
           <section aria-label={t('setup.timeSection')} className="mt-5">
-            <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">{t('setup.timeSection')}</p>
+            <p className="mb-2 section-label">{t('setup.timeSection')}</p>
             <div className="grid grid-cols-5 gap-2">
               {TIME_CONTROL_OPTIONS.map((option) => (
                 <button
@@ -222,12 +218,12 @@ export function OfflineGamePage() {
   const lastMoveRecord = state.moveHistory.at(-1) ?? null
 
   return (
-    <main className="min-h-screen px-4 py-6 text-slate-100">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <main className="min-h-dvh px-4 py-4 text-slate-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3">
         <GameHeader title={t('offline.headerTitle')} onOpenSettings={() => setSettingsOpen(true)} />
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,640px)_20rem] lg:justify-center">
-          <div className="mx-auto flex w-full max-w-[640px] flex-col gap-2">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,720px)_20rem] lg:justify-center">
+          <div className="mx-auto flex w-full max-w-[min(720px,max(288px,calc(100dvh_-_240px)))] flex-col gap-2">
             <PlayerPanel
               name={aiName}
               color={aiColor}
@@ -266,7 +262,7 @@ export function OfflineGamePage() {
             />
           </div>
 
-          <aside className="mx-auto flex w-full max-w-[640px] flex-col gap-3 lg:mx-0 lg:w-full">
+          <aside className="mx-auto flex w-full max-w-[720px] flex-col gap-3 lg:mx-0 lg:w-full">
             <MoveHistory moves={state.moveHistory} />
             <GameControls
               canResign={state.result === null}

@@ -177,24 +177,22 @@ export function ChessBoard({
 
   return (
     <div
-      style={{
-        ...squareColorVars,
-        boxShadow: `0 24px 60px -24px ${theme.glow}, 0 8px 24px -12px rgba(0, 0, 0, 0.6)`,
-      }}
-      className={`@container relative w-full max-w-[640px] overflow-hidden rounded-xl ring-1 ring-white/10 ${
+      style={squareColorVars}
+      className={`@container relative w-full max-w-[min(720px,max(288px,calc(100dvh_-_240px)))] ${
         animationsEnabled ? '' : 'animations-off'
       }`}
     >
-      {checkSquare && <CheckIndicator />}
-
-      <div
-        ref={boardRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => setDrag(null)}
-        className="grid aspect-square w-full touch-none select-none grid-cols-8 grid-rows-8"
-      >
+      {/* Khung gỗ: nút ấm, viền vát sáng, đổ bóng dịu thay cho glow neon */}
+      <div className="board-frame relative rounded-lg p-[2.6cqw] sm:p-[2.2cqw]">
+        {checkSquare && <CheckIndicator />}
+        <div
+          ref={boardRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => setDrag(null)}
+          className="grid aspect-square w-full touch-none select-none grid-cols-8 grid-rows-8 overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgba(50,32,14,0.55)]"
+        >
         {ranks.map((rank, rowIndex) =>
           files.map((file, colIndex) => {
             const square: SquareName = `${file}${rank}`
@@ -254,6 +252,7 @@ export function ChessBoard({
             </div>
           )
         })()}
+      </div>
     </div>
   )
 }

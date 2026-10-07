@@ -16,7 +16,7 @@ export function Modal({ children, onClose }: ModalProps) {
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-sm animate-[modal-in_180ms_ease-out] rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
+        className="w-full max-w-sm animate-[modal-in_180ms_ease-out] rounded-lg border border-white/10 bg-slate-900 p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         {children}

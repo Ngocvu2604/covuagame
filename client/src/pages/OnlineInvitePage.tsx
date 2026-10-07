@@ -54,7 +54,7 @@ export function OnlineInvitePage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-8 text-slate-100">
-      <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-white/10 bg-slate-900/80 p-8 text-center shadow-2xl backdrop-blur">
+      <div className="flex w-full max-w-md flex-col items-center gap-5 card p-8 text-center shadow-2xl backdrop-blur">
         <GameHeader title={t('invite.title')} />
         {error ? (
           <>
