@@ -19,7 +19,7 @@ interface ChessPieceProps {
  * trên mọi nền tảng — glyph Unicode phụ thuộc font của hệ điều hành
  * (trên iPhone quân tốt bị to, dẹt, lệch tâm so với bộ quân).
  */
-const PIECE_PATHS: Record<PieceType, string> = {
+const CLASSIC_PATHS: Record<PieceType, string> = {
   // Tốt: đầu tròn + thân loe + đế
   pawn: 'M50 13c7.7 0 14 6.3 14 14 0 4.6-2.3 8.7-5.8 11.2 8.9 2.8 15.8 11.4 15.8 21.8 0 5.4-1.9 10.4-5 14.3l5 7.7H25l5-7.7c-3.1-3.9-5-8.9-5-14.3 0-10.4 6.9-19 15.8-21.8C47.3 35.7 45 31.6 45 27c0-7.7 6.3-14 14-14z M18 86h64a4 4 0 0 1 4 4v4H14v-4a4 4 0 0 1 4-4z',
   // Xe: răng cưa + thân thắt + đế
@@ -39,7 +39,7 @@ const PIECE_PATHS: Record<PieceType, string> = {
 }
 
 /** Chi tiết vạch/khe vẽ đè bằng màu viền (gờ ngang, mắt mã) — stroke-only */
-const PIECE_DETAILS: Partial<Record<PieceType, string>> = {
+const CLASSIC_DETAILS: Partial<Record<PieceType, string>> = {
   pawn: 'M39.5 49h21',
   rook: 'M31 40h38',
   knight: 'M45 33a3 3 0 1 0 .1 0z M60 28c4.5 3.5 7 9 7.2 15',
@@ -48,11 +48,51 @@ const PIECE_DETAILS: Partial<Record<PieceType, string>> = {
   king: 'M31 60h38 M29 66h42',
 }
 
+
+/** Họ Hiện đại: hình khối gọn, góc cạnh, tỷ lệ mập hơn — khác rõ họ Cổ điển */
+const MODERN_PATHS: Record<PieceType, string> = {
+  // Tốt: cầu + hình thang + thanh đế
+  pawn: 'M50 14a14 14 0 1 1 0 28 14 14 0 0 1 0-28z M36 46h28l8 26H28l8-26z M22 72h56v14H22V72z',
+  // Xe: khối răng cưa + trụ thẳng + đế loe
+  rook: 'M28 12h12v10h6V12h8v10h6V12h12v22H28V12z M32 34h36v30H32V34z M22 64h56v8H22v-8z M24 72h52v14H24V72z',
+  // Mã: khối góc cạnh + khe mõm chéo (evenodd) + mắt
+  knight:
+    'M34 86V52c0-11 5-19 14-24l4-16 9 12c12 5 19 15 19 28v34H34z M44 46l16-9-5 16z',
+  // Tượng: giọt nước + khe chéo + đế 2 thanh
+  bishop:
+    'M50 12c14 12 24 28 24 42 0 11-10 19-24 19s-24-8-24-19c0-14 10-30 24-42z M56 34 44 52h9l10-15z M26 74h48v4H26v-4z M22 78h56v8H22v-8z',
+  // Hậu: 3 gai nhọn + thân thang + đế
+  queen:
+    'M30 34 37 12h6l7 15 7-15h6l7 22H30z M50 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10z M32 34h36l7 30H25l7-30z M20 64h60v8H20v-8z M22 72h56v14H22V72z',
+  // Vua: thánh giá khối + thân vuông bo + đế
+  king:
+    'M45 4h10v9h9v10h-9v9H45v-9h-9V13h9V4z M34 34h32c5 0 10 5 10 10v20c0 6-5 10-10 10H34c-5 0-10-4-10-10V44c0-5 5-10 10-10z M22 74h56v12H22V74z',
+}
+
+const MODERN_DETAILS: Partial<Record<PieceType, string>> = {
+  knight: 'M56 28a3.5 3.5 0 1 0 .1 0z',
+}
+
+/** Mỗi bộ quân chọn một họ tạo hình (đổi họ = đổi hình khối, không chỉ đổi màu) */
+const SHAPE_BY_SET: Record<PieceSetId, 'classic' | 'modern'> = {
+  classic: 'classic',
+  wooden: 'classic',
+  '3d': 'classic',
+  fantasy: 'classic',
+  modern: 'modern',
+  minimal: 'modern',
+  glass: 'modern',
+  neon: 'modern',
+}
+
 /** Hiển thị một quân cờ bằng SVG vector — cùng hình dạng trên mọi thiết bị */
 export function ChessPiece({ type, color, pieceSet = 'classic', className = '' }: ChessPieceProps) {
   const set = getPieceSet(pieceSet)
   const style = color === 'white' ? set.white : set.black
   const gradientId = useId()
+  const useModern = SHAPE_BY_SET[pieceSet] === 'modern'
+  const paths = useModern ? MODERN_PATHS : CLASSIC_PATHS
+  const details = useModern ? MODERN_DETAILS : CLASSIC_DETAILS
 
   const svgStyle: CSSProperties = {
     // Hiệu ứng chiều sâu của từng bộ quân (shadow/glow) giữ nguyên qua CSS filter
@@ -79,10 +119,10 @@ export function ChessPiece({ type, color, pieceSet = 'classic', className = '' }
           </linearGradient>
         </defs>
       )}
-      <path d={PIECE_PATHS[type]} fill={fill} fillRule="evenodd" {...strokeProps} />
-      {style.stroke && PIECE_DETAILS[type] && (
+      <path d={paths[type]} fill={fill} fillRule="evenodd" {...strokeProps} />
+      {style.stroke && details[type] && (
         <path
-          d={PIECE_DETAILS[type]}
+          d={details[type]}
           fill={style.stroke}
           stroke={style.stroke}
           strokeWidth={style.strokeWidth * 1.8}

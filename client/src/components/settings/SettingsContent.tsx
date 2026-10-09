@@ -4,6 +4,7 @@ import { DIFFICULTY_OPTIONS } from '../../constants/difficulty'
 import { PIECE_SET_LIST } from '../../constants/pieceSets'
 import { useSettingsStore } from '../../state/settingsStore'
 import { useT } from '../../i18n/translations'
+import { ChessPiece } from '../chess/ChessPiece'
 
 /**
  * Nội dung cài đặt dùng chung cho SettingsPage và SettingsDrawer.
@@ -127,6 +128,25 @@ export function SettingsContent() {
             onChange={settings.setPieceSet}
             options={PIECE_SET_LIST.map((set) => ({ value: set.id, label: set.label }))}
           />
+          {/* Xem trước bộ quân: vua/hậu/mã/tốt trắng + đen theo bộ đang chọn */}
+          <div className="flex flex-col gap-1 py-1">
+            <p className="section-label">{t('settings.piecePreview')}</p>
+            <div
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 px-2 py-2.5"
+              style={{ background: 'linear-gradient(90deg, var(--sq-light, #ecd8ae) 0 50%, var(--sq-dark, #a97e4f) 50% 100%)' }}
+            >
+              {(['king', 'queen', 'knight', 'pawn'] as const).map((type) => (
+                <span key={`w-${type}`} className="text-[26px] leading-none">
+                  <ChessPiece type={type} color="white" pieceSet={settings.pieceSet} />
+                </span>
+              ))}
+              {(['pawn', 'knight', 'queen', 'king'] as const).map((type) => (
+                <span key={`b-${type}`} className="text-[26px] leading-none">
+                  <ChessPiece type={type} color="black" pieceSet={settings.pieceSet} />
+                </span>
+              ))}
+            </div>
+          </div>
           <SelectField
             label={t('settings.darkMode')}
             value={settings.displayMode}

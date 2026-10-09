@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test:rules": "tsx scripts/rulesTest.ts",
-    "test:ai": "tsx scripts/aiTest.ts"
+    "test:ai": "tsx scripts/aiTest.ts",
+    "test:sound": "tsx scripts/soundTest.ts"
   },
   "dependencies": {
     "appwrite": "^28.1.0",
