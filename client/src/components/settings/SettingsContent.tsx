@@ -185,8 +185,10 @@ export function SettingsContent() {
               max={100}
               value={Math.round(settings.musicVolume * 100)}
               onChange={(event) => settings.setMusicVolume(Number(event.target.value) / 100)}
+              onInput={(event) => settings.setMusicVolume(Number(event.currentTarget.value) / 100)}
               aria-label={t('settings.volume')}
-              className="h-1.5 w-full cursor-pointer accent-emerald-500"
+              aria-valuetext={`${Math.round(settings.musicVolume * 100)}%`}
+              className="h-1.5 w-full touch-pan-x cursor-pointer accent-emerald-500"
             />
             <span className="w-9 shrink-0 text-right text-xs tabular-nums text-slate-400">
               {Math.round(settings.musicVolume * 100)}%

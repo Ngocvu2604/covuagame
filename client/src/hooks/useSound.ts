@@ -16,6 +16,11 @@ export function useSound(): void {
   const musicVolume = useSettingsStore((s) => s.musicVolume)
 
   useEffect(() => {
+    // Dùng cùng mức âm lượng nội bộ cho SFX và nhạc; không đụng tới volume hệ thống.
+    soundService.setVolume(musicVolume)
+  }, [musicVolume])
+
+  useEffect(() => {
     soundService.setEnabled(soundEnabled)
   }, [soundEnabled])
 

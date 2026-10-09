@@ -110,6 +110,7 @@ const HOVER_THROTTLE_MS = 70
 class SoundService {
   private context: AudioContext | null = null
   private enabled = true
+  private volume = 0.5
   /** Oscillator của âm hover đang vang — dùng để CẤT âm cũ trước khi phát âm mới */
   private hoverNodes: { oscillator: OscillatorNode; gain: GainNode } | null = null
   private lastHoverPlayedAt = 0
@@ -122,6 +123,11 @@ class SoundService {
     }
   }
 
+  /** Âm lượng SFX nội bộ, không tác động đến âm lượng hệ thống của thiết bị. */
+  setVolume(volume: number): void {
+    this.volume = Math.min(1, Math.max(0, volume))
+  }
+
   play(name: SoundName): void {
     if (!this.enabled) return
     const context = this.ensureContext()
@@ -132,7 +138,7 @@ class SoundService {
 
     const now = context.currentTime
     for (const spec of RECIPES[name]) {
-      const peak = (spec.gain ?? 0.4) * MASTER_VOLUME
+      const peak = (spec.gain ?? 0.4) * MASTER_VOLUME * this.volume
       const start = now + spec.startAt
 
       if (spec.kind === 'noise') {
@@ -195,7 +201,7 @@ class SoundService {
     oscillator.type = 'triangle'
     oscillator.frequency.value = 1150
     const start = context.currentTime
-    gain.gain.setValueAtTime(0.12 * MASTER_VOLUME, start)
+    gain.gain.setValueAtTime(0.12 * MASTER_VOLUME * this.volume, start)
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.05)
 
     oscillator.connect(gain)
